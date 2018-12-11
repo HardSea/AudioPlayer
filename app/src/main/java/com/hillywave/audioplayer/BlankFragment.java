@@ -27,6 +27,7 @@ public class BlankFragment extends Fragment {
     private TextView tv1;
     private TextView tv2;
     private SeekBar seekBar;
+    private ImageButton btnPause;
 
     private OnFragmentInteractionListener mListener;
 
@@ -77,8 +78,10 @@ public class BlankFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_box, container, false);
         ImageButton btnprev = view.findViewById(R.id.btnPrev);
-        ImageButton btnPause = view.findViewById(R.id.btnPause);
+        btnPause = view.findViewById(R.id.btnPause);
         ImageButton btnNext = view.findViewById(R.id.btnNext);
+
+        btnPause.setImageResource(android.R.drawable.ic_media_pause);
 
 
 
@@ -109,6 +112,27 @@ public class BlankFragment extends Fragment {
         seekBar = view.findViewById(R.id.seekBar);
 
 
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+                Log.d(TAG, "onProgressChanged: " + seekBar.getProgress());
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mListener.changeTimeSong(seekBar.getProgress() * 1000);
+                Log.d(TAG, "onStopTrackingTouch: " + seekBar.getProgress());
+            }
+
+
+        });
+
 
 
         if (mTitle != null && mArtist != null){
@@ -128,9 +152,12 @@ public class BlankFragment extends Fragment {
         tv2.setText(mTitle);
     }
 
-    public void changeSeekBarProgres(int progress){
-        Log.d(TAG, "changeSeekBarProgres: changeSeekBarProgres " + progress);
+    public void changeSeekBarProgres(int progress, int allProgress){
+        Log.d(TAG, "changeSeekBarProgres: " + allProgress);
+        seekBar.setMax(allProgress);
         seekBar.setProgress(progress);
+
+        
     }
 
 
@@ -145,6 +172,13 @@ public class BlankFragment extends Fragment {
     public void onButtonPressedPause() {
         if (mListener != null) {
             mListener.pauseSong();
+            if (new StorageUtil(getContext()).getPlaybackStatus()) {
+                btnPause.setImageResource(android.R.drawable.ic_media_pause);
+            } else {
+                btnPause.setImageResource(android.R.drawable.ic_media_play);
+            }
+
+
         }
     }
 
@@ -172,11 +206,13 @@ public class BlankFragment extends Fragment {
     }
 
 
+
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void prevSong();
         void pauseSong();
         void nextSong();
+        void changeTimeSong(int i);
     }
 
 }

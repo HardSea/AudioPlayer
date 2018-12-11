@@ -45,6 +45,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private TelephonyManager telephonyManager;
     private Handler mHandler = new Handler();
     private static final String TAG = "MediaPlayerService";
+    private boolean playstatus;
 
     private ArrayList<Audio> audioList;
     private int audioIndex = -1;
@@ -99,32 +100,65 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     }
 
-    private void playMedia(){
+    void playMedia(){
         if (!mediaPlayer.isPlaying()){
+            playstatus = true;
+            new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
             mediaPlayer.start();
+            buildNotification(PlaybackStatus.PLAYING);
         }
     }
 
-    private void stopMedia(){
+    void stopMedia(){
         if (mediaPlayer == null) return;
         if (mediaPlayer.isPlaying()){
             mediaPlayer.stop();
+            playstatus = false;
+            new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
+            buildNotification(PlaybackStatus.PAUSED);
         }
     }
 
-    private void pausemedia(){
+    void pausemedia(){
         if (mediaPlayer.isPlaying()){
             mediaPlayer.pause();
             resumePosition = mediaPlayer.getCurrentPosition();
+            playstatus = false;
+            new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
+            buildNotification(PlaybackStatus.PAUSED);
         }
     }
 
-    private void resumeMedia(){
+    void resumeMedia(){
         if (!mediaPlayer.isPlaying()){
             mediaPlayer.seekTo(resumePosition);
             mediaPlayer.start();
+            playstatus = true;
+            new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
+            buildNotification(PlaybackStatus.PLAYING);
         }
     }
+
+    void resumeMedia(int t){
+        Log.d(TAG, "resumeMedia: resumemedia");
+        if (mediaPlayer.isPlaying()){
+            Log.d(TAG, "resumeMedia: " + mediaPlayer.isPlaying());
+            mediaPlayer.pause();
+            Log.d(TAG, "resumeMedia: " + mediaPlayer.isPlaying());
+            playstatus = false;
+            Log.d(TAG, "resumeMedia: " + mediaPlayer.getCurrentPosition());
+            new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
+            mediaPlayer.seekTo(t);
+            Log.d(TAG, "resumeMedia: " + mediaPlayer.getCurrentPosition());
+            mediaPlayer.start();
+            Log.d(TAG, "resumeMedia: " + mediaPlayer.getCurrentPosition());
+            playstatus = true;
+            new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
+            buildNotification(PlaybackStatus.PLAYING);
+        }
+    }
+
+
 
 
     private BroadcastReceiver becomingNoisyReciever = new BroadcastReceiver() {
@@ -371,7 +405,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         notificationManager.cancel(NOTIFICATION_ID);
     }
 
-    private PendingIntent playbackAction(int actionNumber){
+    public PendingIntent playbackAction(int actionNumber){
         Intent playbackAction = new Intent(this, MediaPlayerService.class);
         switch (actionNumber){
             case 0:
@@ -477,14 +511,18 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG, "run: create seekbar listener");
+
                 Intent intent = new Intent(MainActivity.RECEIVER_INTENT);
                 if(mediaPlayer != null){
                     int mCurrentPosition = mediaPlayer.getCurrentPosition() / 1000;
-                    intent.putExtra(MainActivity.RECEIVER_MESSAGE, mCurrentPosition);
-                    Log.d(TAG, "run: sendbroadcast " +  mCurrentPosition);
-                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                    int mAllSize = mediaPlayer.getDuration() / 1000;
 
+
+
+                    intent.putExtra(MainActivity.CURRENT_POSITION, mCurrentPosition);
+                    intent.putExtra(MainActivity.ALL_DURATION, mAllSize);
+                    //intent.putExtra(MainActivity.PLAY_STATUS, playstatus);
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                     //((MainActivity)getApplicationContext()).setSeekBarProgress(mCurrentPosition);
 
                 }

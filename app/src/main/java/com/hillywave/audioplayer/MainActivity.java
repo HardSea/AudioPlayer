@@ -1,6 +1,7 @@
 package com.hillywave.audioplayer;
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -40,9 +41,12 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private ArrayList<Audio> audioList;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.hillywave.audioplayer.PlayNewAudio";
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
-    public static final String RECEIVER_MESSAGE = "RECEIVER_MESSAGE";
+    public static final String CURRENT_POSITION = "RECEIVER_MESSAGE";
+    public static final String ALL_DURATION = "RECEIVER_MESSAGE2";
+    //public static final String PLAY_STATUS = "RECEIVER_MESSAGE3";
     private static final String TAG = "MainActivity";
     private BroadcastReceiver mBroadcastReceiver;
+    private boolean playBackstatus = false;
 
 
     @Override
@@ -50,14 +54,17 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
         mBroadcastReceiver = new BroadcastReceiver() {
 
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "onReceive: register broadcast receiver");
-                int message = intent.getIntExtra(RECEIVER_MESSAGE, -1);
-                setSeekBarProgress(message);
-                Log.d(TAG, "onReceive: " + message);
+                int message = intent.getIntExtra(CURRENT_POSITION, -1);
+                int message2 = intent.getIntExtra(ALL_DURATION, 1);
+               // boolean message3 = intent.getBooleanExtra(PLAY_STATUS,false);
+               // playBackstatus = message3;
+                setSeekBarProgress(message, message2);
             }
         };
 
@@ -66,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         initRecyclerView();
 
         //Toast.makeText(this, String.valueOf(checkPermissionForReadExtertalStorage()), Toast.LENGTH_SHORT).show();
+
 
 
     }
@@ -92,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             RecyclerView recyclerView = findViewById(R.id.recyclerview);
             RecyclerView.Adapter adapter = new RecyclerView_Adapter(audioList, this);
             recyclerView.setAdapter(adapter);
-            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
 
 
         }
@@ -141,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             startService(playerIntent);
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
         } else {
             storage.storeAudioIndex(position);
 
@@ -151,7 +160,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             //Send media with BroadcastReceiver
 
         }
-        //updateTrackInfo(position);
+        updateTrackInfo(position);
+        changeButtonBoxInfo();
 
 
     }
@@ -163,8 +173,17 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             int pos = storage.loadAudioIndex();
         Audio activeAudio =  audioList.get(pos);
 
-        TextView textinfo = findViewById(R.id.audio_info);
-        textinfo.setText("Album: " + activeAudio.getAlbum()
+
+//        TextView textinfo = findViewById(R.id.audio_info);
+//        textinfo.setText("Album: " + activeAudio.getAlbum()
+//                + "\nArtist: " + activeAudio.getArtist()
+//                + "\nData: " + activeAudio.getData()
+//                + "\nTitle: " + activeAudio.getTitle()
+//                + "\nDisplay name: " + activeAudio.getDisplay_name()
+//                + "\nDuration: " + activeAudio.getDuration()
+//                + "\nYear: " + activeAudio.getYear());
+
+        Log.d(TAG, "updateTrackInfo: " + "\nAlbum: " + activeAudio.getAlbum()
                 + "\nArtist: " + activeAudio.getArtist()
                 + "\nData: " + activeAudio.getData()
                 + "\nTitle: " + activeAudio.getTitle()
@@ -172,7 +191,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                 + "\nDuration: " + activeAudio.getDuration()
                 + "\nYear: " + activeAudio.getYear());
 
-        ImageView album_art = findViewById(R.id.album_art);
+//        ImageView album_art = findViewById(R.id.album_art);
+
         MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
         metadataRetriever.setDataSource(activeAudio.getData());
         byte[] art;
@@ -180,20 +200,22 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             art = metadataRetriever.getEmbeddedPicture();
             Bitmap song_cover = BitmapFactory.decodeByteArray(art, 0, art.length);
-            album_art.setImageBitmap(song_cover);
+//            album_art.setImageBitmap(song_cover);
+            Log.d(TAG, "updateTrackInfo: " + song_cover);
 
         } catch (Exception e){
-            album_art.setBackgroundColor(Color.GRAY);
+//            album_art.setBackgroundColor(Color.GRAY);
             e.printStackTrace();
         }
 
 
     }
 
+
+
     private void loadAudio(){
 
-
-
+        //Меню с просьбой подтвердить разрешение
 
         if (!checkPermissionForReadExtertalStorage()){
             try {
@@ -246,7 +268,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             player = binder.getService();
             serviceBound = true;
 
-            Toast.makeText(MainActivity.this, "Service bound", Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -309,8 +330,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         }
     }
 
-    public void setSeekBarProgress(int progress){
-        Log.d(TAG, "setSeekBarProgress: setSeekBarProgress" );
+    public void setSeekBarProgress(int progress, int allProgrss){
+
         StorageUtil storage = new StorageUtil(getApplicationContext());
         int audioIndex = storage.loadAudioIndex();
         ArrayList<Audio> audioListfragment = storage.loadAudio();
@@ -318,7 +339,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         BlankFragment articleFrag = (BlankFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
 
         if (articleFrag != null) {
-            articleFrag.changeSeekBarProgres(progress);
+            articleFrag.changeSeekBarProgres(progress, allProgrss);
+           // articleFrag.changeButton(playbackstatus);
 
 
         } else {
@@ -354,6 +376,11 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     @Override
     public void pauseSong() {
+        if (new StorageUtil(getApplicationContext()).getPlaybackStatus()){
+            player.pausemedia();
+        } else {
+            player.resumeMedia();
+        }
 
     }
 
@@ -365,6 +392,11 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         playAudio(storage.loadAudioIndex());
         changeButtonBoxInfo();
 
+    }
+
+    @Override
+    public void changeTimeSong(int i) {
+            player.resumeMedia(i);
     }
 
 

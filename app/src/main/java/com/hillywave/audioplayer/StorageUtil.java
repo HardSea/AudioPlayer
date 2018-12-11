@@ -71,6 +71,19 @@ public class StorageUtil {
 
     }
 
+    public void setPlaybackStatus(boolean playbackstatus){
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("playbackStatus", playbackstatus);
+        editor.apply();
+
+    }
+
+    public boolean getPlaybackStatus(){
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getBoolean("playbackStatus", false);
+    }
+
 
 
 }
