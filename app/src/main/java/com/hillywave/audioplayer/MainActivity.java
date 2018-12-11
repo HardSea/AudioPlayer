@@ -336,11 +336,14 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         int audioIndex = storage.loadAudioIndex();
         ArrayList<Audio> audioListfragment = storage.loadAudio();
 
+
         BlankFragment articleFrag = (BlankFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
 
         if (articleFrag != null) {
             articleFrag.changeSeekBarProgres(progress, allProgrss);
-           // articleFrag.changeButton(playbackstatus);
+
+
+            articleFrag.changeButton();
 
 
         } else {

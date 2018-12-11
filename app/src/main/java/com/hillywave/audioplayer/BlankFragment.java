@@ -34,19 +34,6 @@ public class BlankFragment extends Fragment {
     public BlankFragment() {  }
 
 
-
-//    // TODO: Rename and change types and number of parameters
-//    public static BlankFragment newInstance(String param1, String param2) {
-//        BlankFragment fragment = new BlankFragment();
-//        Bundle args = new Bundle();
-//        args.putString(ARG_PARAM1, param1);
-//        args.putString(ARG_PARAM2, param2);
-//        fragment.setArguments(args);
-//        return fragment;
-//    }
-
-
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,18 +44,9 @@ public class BlankFragment extends Fragment {
         if (getArguments() != null) {
             mTitle = getArguments().getString(ARG_TITLE);
             mArtist = getArguments().getString(ARG_ARTIST);
-
-
-
-
-
-
         }
-
-
-
-
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -82,9 +60,6 @@ public class BlankFragment extends Fragment {
         ImageButton btnNext = view.findViewById(R.id.btnNext);
 
         btnPause.setImageResource(android.R.drawable.ic_media_pause);
-
-
-
 
         btnprev.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,16 +109,14 @@ public class BlankFragment extends Fragment {
         });
 
 
-
         if (mTitle != null && mArtist != null){
             tv1.setText(mArtist);
             tv2.setText(mTitle);
         }
-
-
-
         return view;
     }
+
+
 
     public void changeSongInfo(String artist, String title){
         mArtist = artist;
@@ -156,13 +129,9 @@ public class BlankFragment extends Fragment {
         Log.d(TAG, "changeSeekBarProgres: " + allProgress);
         seekBar.setMax(allProgress);
         seekBar.setProgress(progress);
-
-        
     }
 
 
-
-    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressedPrev() {
         if (mListener != null) {
             mListener.prevSong();
@@ -205,6 +174,13 @@ public class BlankFragment extends Fragment {
         mListener = null;
     }
 
+    public void changeButton() {
+        if (new StorageUtil(getContext()).getPlaybackStatus()){
+            btnPause.setImageResource(android.R.drawable.ic_media_pause);
+        } else {
+            btnPause.setImageResource(android.R.drawable.ic_media_play);
+        }
+    }
 
 
     public interface OnFragmentInteractionListener {
