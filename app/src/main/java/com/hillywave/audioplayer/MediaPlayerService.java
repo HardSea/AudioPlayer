@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -32,7 +34,7 @@ import android.widget.RemoteViews;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener, AudioManager.OnAudioFocusChangeListener{
+public class MediaPlayerService extends Service implements  MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener, AudioManager.OnAudioFocusChangeListener{
 
     private final IBinder iBinder = new LocalBinder();
 
@@ -61,7 +63,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls transportControls;
 
-    private static final int NOTIFICATION_ID = 101;
+    private static final int NOTIFICATION_ID = 114411;
 
 
     @Override
@@ -85,6 +87,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         mediaPlayer.setOnBufferingUpdateListener(this);
         mediaPlayer.setOnSeekCompleteListener(this);
         mediaPlayer.setOnInfoListener(this);
+        mediaPlayer.setScreenOnWhilePlaying(true);
+        mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 
         mediaPlayer.reset();
 
@@ -95,6 +99,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             e.printStackTrace();
             stopSelf();
         }
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+
+                Log.d(TAG, "onCompletion: On Completion Song");
+
+            }
+        });
+        
 
         mediaPlayer.prepareAsync();
 
@@ -209,6 +223,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             audioIndex = new StorageUtil(getApplicationContext()).loadAudioIndex();
+            Log.d("Audio index", "MediaPlayerService broadcast receiver: " + audioIndex);
             if (audioIndex != -1 && audioIndex < audioList.size()){
                 activeAudio = audioList.get(audioIndex);
             } else {
@@ -245,10 +260,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         mediaSession.setActive(true);
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-
-
-
-
 
 
 
@@ -311,7 +322,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void skipToNext(){
-
+        Log.d(TAG, "skipToNext: SKIP TO NExt");
         if (audioIndex == audioList.size() - 1){
             audioIndex = 0;
             activeAudio = audioList.get(audioIndex);
@@ -386,9 +397,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         notificationLayout.setOnClickPendingIntent(R.id.btnPause, play_pauseAction);
         notificationLayout.setOnClickPendingIntent(R.id.btnNext, playbackAction(2));
 
+        PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, "1")
                 .setCustomContentView(notificationLayout)
                 .setShowWhen(false)
+                .setContentIntent(pi)
                 .setSmallIcon(android.R.drawable.stat_sys_headset)
                 .setOngoing(true)
                 .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
@@ -402,6 +417,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void removeNotification(){
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        assert notificationManager != null;
         notificationManager.cancel(NOTIFICATION_ID);
     }
 
@@ -514,6 +530,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
                 Intent intent = new Intent(MainActivity.RECEIVER_INTENT);
                 if(mediaPlayer != null){
+
                     int mCurrentPosition = mediaPlayer.getCurrentPosition() / 1000;
                     int mAllSize = mediaPlayer.getDuration() / 1000;
 

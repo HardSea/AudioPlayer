@@ -9,6 +9,12 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <include
+        android:id="@+id/toolBar"
+        layout="@layout/tool_bar">
+
+    </include>
+
 
 
     <android.support.v7.widget.RecyclerView

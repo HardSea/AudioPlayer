@@ -2,6 +2,7 @@ package com.hillywave.audioplayer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -42,6 +43,7 @@ public class StorageUtil {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("audioIndex", index);
         editor.apply();
+        Log.d("Audio index", "StorageUtil storeaudioindex: " + index);
     }
 
     public int loadAudioIndex(){

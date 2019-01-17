@@ -1,5 +1,7 @@
 package com.hillywave.audioplayer;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
 
 public class Audio implements Serializable {
@@ -11,8 +13,10 @@ public class Audio implements Serializable {
     private String display_name;
     private String duration;
     private String year;
+    private long lastChange;
+    private byte[] image;
 
-    Audio(String data, String title, String album, String artist, String display_name, String duration, String year){
+    Audio(String data, String title, String album, String artist, String display_name, String duration, String year, byte[] image){
         this.data = data;
         this.title = title;
         this.album = album;
@@ -20,6 +24,20 @@ public class Audio implements Serializable {
         this.display_name = display_name;
         this.duration = duration;
         this.year = year;
+        this.image = image;
+
+
+    }
+
+    Audio(String data, String title, String album, String artist, String display_name, String duration, String year, long lastChange){
+        this.data = data;
+        this.title = title;
+        this.album = album;
+        this.artist = artist;
+        this.display_name = display_name;
+        this.duration = duration;
+        this.year = year;
+        this.lastChange = lastChange;
 
 
     }
@@ -79,4 +97,13 @@ public class Audio implements Serializable {
     public void setYear(String year) {
         this.year = year;
     }
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
 }
+

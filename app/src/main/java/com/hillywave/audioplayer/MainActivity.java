@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -20,25 +21,38 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements BlankFragment.OnFragmentInteractionListener{
 
     private MediaPlayerService player;
     boolean serviceBound = false;
     private ArrayList<Audio> audioList;
+    private RecyclerView.Adapter adapter;
+    private Toolbar toolBar;
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor editor;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.hillywave.audioplayer.PlayNewAudio";
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String CURRENT_POSITION = "RECEIVER_MESSAGE";
@@ -54,7 +68,13 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        toolBar = findViewById(R.id.toolBar);
+        setSupportActionBar(toolBar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
 
+        prefs = getApplicationContext().getSharedPreferences("default_preference", MODE_PRIVATE);
+        editor = prefs.edit();
+        editor.apply();
 
         mBroadcastReceiver = new BroadcastReceiver() {
 
@@ -68,13 +88,31 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             }
         };
 
-        loadAudio();
+        audioList = new ArrayList<>();
 
-        initRecyclerView();
+      //loadAudio();
+
+        if (!checkPermissionForReadExtertalStorage()) {
+            try {
+                requestPermissionForReadExtertalStorage();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            createlist();
+        }
+
+       // initRecyclerView();
 
         //Toast.makeText(this, String.valueOf(checkPermissionForReadExtertalStorage()), Toast.LENGTH_SHORT).show();
 
 
+
+    }
+
+    private void createlist(){
+        loadAudio();
+        initRecyclerView();
 
     }
 
@@ -96,31 +134,54 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     }
 
     private void initRecyclerView(){
+        Log.d(TAG, "initRecyclerView: ");
         if (audioList.size() > 0){
             RecyclerView recyclerView = findViewById(R.id.recyclerview);
-            RecyclerView.Adapter adapter = new RecyclerView_Adapter(audioList, this);
+            adapter = new RecyclerView_Adapter(audioList, this);
             recyclerView.setAdapter(adapter);
-            recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+            RecyclerView.LayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+            lm.setAutoMeasureEnabled(false);
+            recyclerView.setLayoutManager(lm);
 
 
         }
+        Log.d(TAG, "initRecyclerView: end");
     }
 
 
     public void requestPermissionForReadExtertalStorage() throws Exception {
         try {
-            int WRITE_STORAGE_PERMISSION_REQUEST_CODE = 1;
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_STORAGE_PERMISSION_REQUEST_CODE);
+
+            int READ_STORAGE_PERMISSION_REQUEST_CODE = 1;
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_STORAGE_PERMISSION_REQUEST_CODE);
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    createlist();
+
+                } else {
+                    Toast.makeText(getApplicationContext(), "Додатку необхіден доступ для зчитування файлів", Toast.LENGTH_LONG).show();
+
+                    try {
+                        requestPermissionForReadExtertalStorage();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+    }
 
     public boolean checkPermissionForReadExtertalStorage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int result = this.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            int result = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
             return result == PackageManager.PERMISSION_GRANTED;
         }
         return false;
@@ -143,6 +204,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         if (!serviceBound){
             storage.storeAudio(audioList);
             storage.storeAudioIndex(position);
+            Log.d("Audio index", "Play audio in main activity: " + position);
 
             Intent playerIntent = new Intent(this, MediaPlayerService.class);
             //playerIntent.putExtra("media", audioList.get(position).getData());
@@ -222,22 +284,23 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                 requestPermissionForReadExtertalStorage();
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                if (checkPermissionForReadExtertalStorage())
-                    loadAudio();
-                }
+            }
+
             } else {
 
 
             ContentResolver contentResolver = getContentResolver();
 
+            MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
+
             Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
-            String setOrder = MediaStore.Audio.Media.TITLE + " ASC";
+            // TODO PREFS EDITOR
+            String setOrder = MediaStore.Audio.Media.DATE_MODIFIED + " DESC";
             Cursor cursor = contentResolver.query(uri, null, selection, null, setOrder);
 
+
             if (cursor != null && cursor.getCount() > 0) {
-                audioList = new ArrayList<>();
                 while (cursor.moveToNext()) {
                     String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                     String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
@@ -246,8 +309,18 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                     String display_name = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
                     String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
                     String year = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.YEAR));
+                    Long lastchange = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED));
 
-                    audioList.add(new Audio(data, title, album, artist, display_name, duration, year));
+
+                    //metadataRetriever.setDataSource(data);
+                    //byte[] image = metadataRetriever.getEmbeddedPicture();
+
+
+                    Log.d(TAG, "loadAudio: " + title);
+
+
+                   // audioList.add(new Audio(data, title, album, artist, display_name, duration, year, image));
+                    audioList.add(new Audio(data, title, album, artist, display_name, duration, year, lastchange));
 
                 }
 
@@ -256,6 +329,18 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             assert cursor != null;
             cursor.close();
         }
+    }
+
+    private void orderList(int orderParametr){
+        // 00 — Title asc
+        // 01 — Title desc
+        // 10 — Date asc
+        // 11 — Date desc
+        // 20 — Album asc
+        // 21 — Album desc
+
+
+
     }
 
 
@@ -305,9 +390,15 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private void changeButtonBoxInfo(){
         StorageUtil storage = new StorageUtil(getApplicationContext());
         int audioIndex = storage.loadAudioIndex();
+        Log.d("Audio index", "Main Activity changebuttonBox Info: " + audioIndex);
         ArrayList<Audio> audioListfragment = storage.loadAudio();
 
         BlankFragment articleFrag = (BlankFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
+
+
+
+
+
 
         if (articleFrag != null) {
 
@@ -399,7 +490,9 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     @Override
     public void changeTimeSong(int i) {
+
             player.resumeMedia(i);
+
     }
 
 

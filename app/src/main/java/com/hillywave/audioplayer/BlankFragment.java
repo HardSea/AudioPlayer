@@ -21,13 +21,14 @@ public class BlankFragment extends Fragment {
     private static final String TAG = "BlankFragment";
 
 
-    // TODO: Rename and change types of parameters
     private String mTitle;
     private String mArtist;
     private TextView tv1;
     private TextView tv2;
     private SeekBar seekBar;
     private ImageButton btnPause;
+    private ImageButton btnprev;
+    private ImageButton btnNext;
 
     private OnFragmentInteractionListener mListener;
 
@@ -55,9 +56,10 @@ public class BlankFragment extends Fragment {
 
 
         View view = inflater.inflate(R.layout.fragment_box, container, false);
-        ImageButton btnprev = view.findViewById(R.id.btnPrev);
+        btnprev = view.findViewById(R.id.btnPrev);
         btnPause = view.findViewById(R.id.btnPause);
-        ImageButton btnNext = view.findViewById(R.id.btnNext);
+        btnNext = view.findViewById(R.id.btnNext);
+        seekBar = view.findViewById(R.id.seekBar);
 
         btnPause.setImageResource(android.R.drawable.ic_media_pause);
 
@@ -82,16 +84,22 @@ public class BlankFragment extends Fragment {
             }
         });
 
+        btnPause.setClickable(false);
+        btnNext.setClickable(false);
+        btnprev.setClickable(false);
+        seekBar.setVisibility(View.INVISIBLE);
+
+
+
+
         tv1 = view.findViewById(R.id.nameArtistFragment);
         tv2 = view.findViewById(R.id.nameTitleFragment);
-        seekBar = view.findViewById(R.id.seekBar);
 
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
-                Log.d(TAG, "onProgressChanged: " + seekBar.getProgress());
             }
 
             @Override
@@ -101,8 +109,9 @@ public class BlankFragment extends Fragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+
                 mListener.changeTimeSong(seekBar.getProgress() * 1000);
-                Log.d(TAG, "onStopTrackingTouch: " + seekBar.getProgress());
+
             }
 
 
@@ -119,6 +128,10 @@ public class BlankFragment extends Fragment {
 
 
     public void changeSongInfo(String artist, String title){
+        btnNext.setClickable(true);
+        btnPause.setClickable(true);
+        btnprev.setClickable(true);
+        seekBar.setVisibility(View.VISIBLE);
         mArtist = artist;
         mTitle = title;
         tv1.setText(mArtist);
@@ -126,7 +139,6 @@ public class BlankFragment extends Fragment {
     }
 
     public void changeSeekBarProgres(int progress, int allProgress){
-        Log.d(TAG, "changeSeekBarProgres: " + allProgress);
         seekBar.setMax(allProgress);
         seekBar.setProgress(progress);
     }
@@ -162,6 +174,7 @@ public class BlankFragment extends Fragment {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
+
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");

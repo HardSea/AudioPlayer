@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#a9cfde"
+    >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Audio Player"
+        android:textSize="28sp"
+        android:fontFamily="cursive"/>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/sort_icon"
+        android:layout_gravity="end"
+        android:padding="10dp"
+        android:background="@color/transparent"/>
+
+</android.support.v7.widget.Toolbar>
