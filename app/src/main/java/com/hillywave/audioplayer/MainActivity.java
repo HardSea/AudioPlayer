@@ -56,11 +56,15 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.hillywave.audioplayer.PlayNewAudio";
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String CURRENT_POSITION = "RECEIVER_MESSAGE";
-    public static final String ALL_DURATION = "RECEIVER_MESSAGE2";
+    public static final String ALL_DURATION = "RECEIVER_MESSAGE2";;
+    public static final String ACTION = "RECEIVER_MESSAGE3";
+    public static final int CHANGE_SEEKBAR = 15511;
+    public static final int NEW_AUDIO = 14411;
     //public static final String PLAY_STATUS = "RECEIVER_MESSAGE3";
     private static final String TAG = "MainActivity";
     private BroadcastReceiver mBroadcastReceiver;
     private boolean playBackstatus = false;
+    public static final int NOTIFICATION_ID = 114411;
 
 
     @Override
@@ -80,11 +84,25 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             @Override
             public void onReceive(Context context, Intent intent) {
-                int message = intent.getIntExtra(CURRENT_POSITION, -1);
-                int message2 = intent.getIntExtra(ALL_DURATION, 1);
+
+                switch(intent.getIntExtra(ACTION, CHANGE_SEEKBAR)){
+                    case (CHANGE_SEEKBAR):
+                    int message = intent.getIntExtra(CURRENT_POSITION, -1);
+                    int message2 = intent.getIntExtra(ALL_DURATION, 1);
+                    setSeekBarProgress(message, message2);
+                    break;
+                    case (NEW_AUDIO):
+                    changeButtonBoxInfo();
+                    break;
+                    default:
+                        break;
+
+                }
                // boolean message3 = intent.getBooleanExtra(PLAY_STATUS,false);
                // playBackstatus = message3;
-                setSeekBarProgress(message, message2);
+
+
+
             }
         };
 
@@ -119,10 +137,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     @Override
     protected void onStart() {
         super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver),
-                new IntentFilter(RECEIVER_INTENT)
-        );
-
+        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), new IntentFilter(RECEIVER_INTENT));
+        changeButtonBoxInfo();
 
     }
 
@@ -188,15 +204,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     }
 
 
-
-
-
-
-
-
-
-
-
     //void playAudio(String media){
     void playAudio(int position){
         StorageUtil storage = new StorageUtil(getApplicationContext());
@@ -222,13 +229,41 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             //Send media with BroadcastReceiver
 
         }
-        updateTrackInfo(position);
+        updateTrackInfo();
         changeButtonBoxInfo();
 
 
     }
 
-    private void updateTrackInfo(int position){
+    void playAudio(){
+        StorageUtil storage = new StorageUtil(getApplicationContext());
+        if (storage.loadAudioIndex() != -1) {
+
+            if (!serviceBound) {
+                storage.storeAudio(audioList);
+
+
+                Intent playerIntent = new Intent(this, MediaPlayerService.class);
+                //playerIntent.putExtra("media", audioList.get(position).getData());
+
+                startService(playerIntent);
+                bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+            } else {
+                Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
+                sendBroadcast(broadcastIntent);
+
+                //Service is active
+                //Send media with BroadcastReceiver
+
+            }
+            updateTrackInfo();
+            changeButtonBoxInfo();
+
+        }
+    }
+
+    private void updateTrackInfo(){
        // Audio activeAudio = audioList.get(position);
 
             StorageUtil storage = new StorageUtil(getApplicationContext());
@@ -382,6 +417,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             unbindService(serviceConnection);
             player.stopSelf();
         }
+        new StorageUtil(getApplicationContext()).setPlaybackStatus(false);
     }
 
 
@@ -395,29 +431,27 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
         BlankFragment articleFrag = (BlankFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
 
+        if (audioIndex != -1) {
+
+            if (articleFrag != null) {
+
+                articleFrag.changeSongInfo(audioListfragment.get(audioIndex).getArtist(), audioListfragment.get(audioIndex).getTitle());
+
+            } else {
+
+                BlankFragment newFragment = new BlankFragment();
+                Bundle args = new Bundle();
+                args.putString("audio_title", audioListfragment.get(audioIndex).getTitle());
+                args.putString("audio_artist", audioListfragment.get(audioIndex).getArtist());
 
 
+                newFragment.setArguments(args);
 
-
-
-        if (articleFrag != null) {
-
-            articleFrag.changeSongInfo(audioListfragment.get(audioIndex).getArtist(), audioListfragment.get(audioIndex).getTitle());
-
-        } else {
-
-            BlankFragment newFragment = new BlankFragment();
-            Bundle args = new Bundle();
-            args.putString("audio_title", audioListfragment.get(audioIndex).getTitle());
-            args.putString("audio_artist", audioListfragment.get(audioIndex).getArtist());
-
-
-            newFragment.setArguments(args);
-
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_box, newFragment);
-            transaction.addToBackStack(null);
-            transaction.commit();
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                transaction.replace(R.id.fragment_box, newFragment);
+                transaction.addToBackStack(null);
+                transaction.commit();
+            }
         }
     }
 
@@ -470,12 +504,15 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     @Override
     public void pauseSong() {
-        if (new StorageUtil(getApplicationContext()).getPlaybackStatus()){
-            player.pausemedia();
+        if (player != null) {
+            if (new StorageUtil(getApplicationContext()).getPlaybackStatus()) {
+                player.pausemedia();
+            } else {
+                player.resumeMedia();
+            }
         } else {
-            player.resumeMedia();
+            playAudio();
         }
-
     }
 
     @Override

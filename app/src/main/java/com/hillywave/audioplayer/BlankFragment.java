@@ -61,7 +61,8 @@ public class BlankFragment extends Fragment {
         btnNext = view.findViewById(R.id.btnNext);
         seekBar = view.findViewById(R.id.seekBar);
 
-        btnPause.setImageResource(android.R.drawable.ic_media_pause);
+        new StorageUtil(getContext()).setPlaybackStatus(false);
+        changeButton();
 
         btnprev.setOnClickListener(new View.OnClickListener() {
             @Override

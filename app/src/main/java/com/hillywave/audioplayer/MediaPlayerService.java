@@ -63,7 +63,6 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls transportControls;
 
-    private static final int NOTIFICATION_ID = 114411;
 
 
     @Override
@@ -99,15 +98,6 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
             e.printStackTrace();
             stopSelf();
         }
-
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-
-                Log.d(TAG, "onCompletion: On Completion Song");
-
-            }
-        });
         
 
         mediaPlayer.prepareAsync();
@@ -122,6 +112,8 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
             buildNotification(PlaybackStatus.PLAYING);
         }
     }
+
+
 
     void stopMedia(){
         if (mediaPlayer == null) return;
@@ -154,18 +146,12 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     }
 
     void resumeMedia(int t){
-        Log.d(TAG, "resumeMedia: resumemedia");
         if (mediaPlayer.isPlaying()){
-            Log.d(TAG, "resumeMedia: " + mediaPlayer.isPlaying());
             mediaPlayer.pause();
-            Log.d(TAG, "resumeMedia: " + mediaPlayer.isPlaying());
             playstatus = false;
-            Log.d(TAG, "resumeMedia: " + mediaPlayer.getCurrentPosition());
             new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
             mediaPlayer.seekTo(t);
-            Log.d(TAG, "resumeMedia: " + mediaPlayer.getCurrentPosition());
             mediaPlayer.start();
-            Log.d(TAG, "resumeMedia: " + mediaPlayer.getCurrentPosition());
             playstatus = true;
             new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
             buildNotification(PlaybackStatus.PLAYING);
@@ -245,9 +231,6 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     }
 
 
-
-
-
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void initMediaSession() throws RemoteException{
         if (mediaSessionManager != null) return;
@@ -260,7 +243,6 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
         mediaSession.setActive(true);
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-
 
 
         updateMetaData();
@@ -311,14 +293,11 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
     private void updateMetaData(){
 
-        Bitmap albumArt = BitmapFactory.decodeResource(getResources(), R.drawable.image);
         mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-        .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
         .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, activeAudio.getArtist())
         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, activeAudio.getAlbum())
         .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getTitle())
         .build());
-
     }
 
     private void skipToNext(){
@@ -369,10 +348,6 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
             play_pauseAction = playbackAction(0);
         }
 
-        Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.image);
-
-
-
 //        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, "1")
 //                .setShowWhen(false)
 //                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
@@ -410,7 +385,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
                 .setMediaSession(mediaSession.getSessionToken()))
                 .setColor(getResources().getColor(R.color.colorPrimary));
 
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFICATION_ID, notificationBuilder.build());
+        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(MainActivity.NOTIFICATION_ID, notificationBuilder.build());
 
 
     }
@@ -418,7 +393,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     private void removeNotification(){
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         assert notificationManager != null;
-        notificationManager.cancel(NOTIFICATION_ID);
+        notificationManager.cancel(MainActivity.NOTIFICATION_ID);
     }
 
     public PendingIntent playbackAction(int actionNumber){
@@ -523,7 +498,6 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
         handleIncomingActions(intent);
 
 
-//Make sure you update Seekbar on UI thread
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -538,6 +512,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
                     intent.putExtra(MainActivity.CURRENT_POSITION, mCurrentPosition);
                     intent.putExtra(MainActivity.ALL_DURATION, mAllSize);
+                    intent.putExtra(MainActivity.ACTION, MainActivity.CHANGE_SEEKBAR);
                     //intent.putExtra(MainActivity.PLAY_STATUS, playstatus);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                     //((MainActivity)getApplicationContext()).setSeekBarProgress(mCurrentPosition);
@@ -614,26 +589,39 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        stopMedia();
-        stopSelf();
+        Log.d(TAG, "onCompletion: On Completion Song");
+        skipToNext();
+        updateMetaData();
+        buildNotification(PlaybackStatus.PLAYING);
+
+        Intent intent = new Intent(MainActivity.RECEIVER_INTENT);
+        if(mediaPlayer != null) {
+            intent.putExtra(MainActivity.ACTION, MainActivity.NEW_AUDIO);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+        }
     }
 
     @Override
-    public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
+    public boolean onError(MediaPlayer mp, int what, int extra)
+    {
+        Log.e(getPackageName(), String.format("Error(%s%s)", what, extra));
 
-        switch (what){
-            case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
-                Log.d("Media Player error", "MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK " + extra);
-                break;
-            case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-                Log.d("Media Player error", "MEDIA_ERROR_SERVER_DIED " + extra);
-                break;
-            case MediaPlayer.MEDIA_ERROR_UNKNOWN:
-                Log.d("Media Player error", "MEDIA_ERROR_UNKNOWN " + extra);
-                break;
-         }
 
-        return false;
+        if(what == MediaPlayer.MEDIA_ERROR_SERVER_DIED)
+            mp.reset();
+
+        else if(what == MediaPlayer.MEDIA_ERROR_UNKNOWN)
+            mp.reset();
+        // Deal with any other errors you need to.
+
+        // I'm under the assumption you set the path to the song
+        // and handle onPrepare, start(), etc with this function
+        playMedia();
+        mediaPlayer.setOnErrorListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+        mediaPlayer.setOnPreparedListener(this);
+
+        return true;
     }
 
     @Override

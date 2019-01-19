@@ -42,12 +42,12 @@
 
         <ImageButton
             android:id="@+id/btnPrev"
-            android:padding="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:src="@android:drawable/ic_media_previous"
             android:background="@null"
+            android:padding="5dp"
+            android:src="@android:drawable/ic_media_previous"
             app:srcCompat="@android:drawable/ic_media_previous" />
 
         <ImageButton
