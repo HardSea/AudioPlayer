@@ -1,6 +1,7 @@
 package com.hillywave.audioplayer;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -15,6 +16,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
@@ -28,6 +30,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.ViewDragHelper;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -35,8 +39,18 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,7 +64,9 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     boolean serviceBound = false;
     private ArrayList<Audio> audioList;
     private RecyclerView.Adapter adapter;
+    private RecyclerView recyclerView;
     private Toolbar toolBar;
+    private ImageButton sortBtn;
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.hillywave.audioplayer.PlayNewAudio";
@@ -75,10 +91,19 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         toolBar = findViewById(R.id.toolBar);
         setSupportActionBar(toolBar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
+        sortBtn = toolBar.findViewById(R.id.sortBtn);
+        sortBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                callSortDialog();
+            }
+        });
 
         prefs = getApplicationContext().getSharedPreferences("default_preference", MODE_PRIVATE);
         editor = prefs.edit();
         editor.apply();
+
+
 
         mBroadcastReceiver = new BroadcastReceiver() {
 
@@ -128,6 +153,109 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     }
 
+    private void callSortDialog(){
+//        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//        View v = LayoutInflater.from(this).inflate(R.layout.fragment_setorder, null, false);
+//        builder.setView(v);
+//        AlertDialog setSysProfileDialog = builder.create();
+//        setSysProfileDialog.show();
+
+
+        final View layout = getLayoutInflater().inflate(R.layout.fragment_setorder, null, false);
+        final RadioGroup radioGroup = layout.findViewById(R.id.radioGroup_setOrder);
+        final CheckBox checkBox = layout.findViewById(R.id.reverseOrder);
+
+        switch (prefs.getInt("order_option", 3)){
+            // 1 - Sort by date
+            // 2 - Sort by artist
+            // 3 - Sort by title
+            // 4 - Sort by album
+            case 1:
+                radioGroup.check(R.id.radioButtonDate);
+                break;
+            case 2:
+                radioGroup.check(R.id.radioButtonArtist);
+                break;
+            case 3:
+                radioGroup.check(R.id.radioButtonTitle);
+                break;
+            case 4:
+                radioGroup.check(R.id.radioButtonAlbum);
+                break;
+            default:
+                break;
+        }
+        if (prefs.getBoolean("order_reverseOrder", false)){
+            checkBox.setChecked(true);
+        } else {
+            checkBox.setChecked(false);
+        }
+
+
+
+
+        final PopupWindow changeSortPopUp = new PopupWindow(getApplicationContext());
+        changeSortPopUp.setContentView(layout);
+        changeSortPopUp.setWidth(LinearLayout.LayoutParams.WRAP_CONTENT);
+        changeSortPopUp.setHeight(LinearLayout.LayoutParams.WRAP_CONTENT);
+        changeSortPopUp.setFocusable(true);
+        changeSortPopUp.setAnimationStyle(R.style.animation_popupwindow);
+
+
+        changeSortPopUp.setBackgroundDrawable(new BitmapDrawable());
+
+
+        findViewById(R.id.main_layout).post(new Runnable() {
+            public void run() {
+                changeSortPopUp.showAtLocation(findViewById(R.id.main_layout), Gravity.CENTER, 0, 0);
+            }
+        });
+
+
+        Button close =  layout.findViewById(R.id.setOrder_confirmBtn);
+        close.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // 1 - Sort by date
+                // 2 - Sort by artist
+                // 3 - Sort by title
+                // 4 - Sort by album
+
+                switch (radioGroup.getCheckedRadioButtonId()){
+                    case R.id.radioButtonDate:
+                        editor.putInt("order_option", 1);
+                        break;
+                    case R.id.radioButtonArtist:
+                        editor.putInt("order_option", 2);
+                        break;
+                    case R.id.radioButtonTitle:
+                        editor.putInt("order_option", 3);
+                        break;
+                    case R.id.radioButtonAlbum:
+                        editor.putInt("order_option", 4);
+                        break;
+                    default:
+                        break;
+                }
+                if (checkBox.isChecked()){
+                    editor.putBoolean("order_reverseOrder", true);
+                } else {
+                    editor.putBoolean("order_reverseOrder", false);
+                }
+
+                editor.apply();
+                changeSortPopUp.dismiss();
+
+                loadAudio();
+                adapter.notifyDataSetChanged();
+            }
+        });
+
+
+
+    }
+
     private void createlist(){
         loadAudio();
         initRecyclerView();
@@ -152,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private void initRecyclerView(){
         Log.d(TAG, "initRecyclerView: ");
         if (audioList.size() > 0){
-            RecyclerView recyclerView = findViewById(R.id.recyclerview);
+            recyclerView = findViewById(R.id.recyclerview);
             adapter = new RecyclerView_Adapter(audioList, this);
             recyclerView.setAdapter(adapter);
             RecyclerView.LayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
@@ -264,31 +392,9 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     }
 
     private void updateTrackInfo(){
-       // Audio activeAudio = audioList.get(position);
-
             StorageUtil storage = new StorageUtil(getApplicationContext());
             int pos = storage.loadAudioIndex();
         Audio activeAudio =  audioList.get(pos);
-
-
-//        TextView textinfo = findViewById(R.id.audio_info);
-//        textinfo.setText("Album: " + activeAudio.getAlbum()
-//                + "\nArtist: " + activeAudio.getArtist()
-//                + "\nData: " + activeAudio.getData()
-//                + "\nTitle: " + activeAudio.getTitle()
-//                + "\nDisplay name: " + activeAudio.getDisplay_name()
-//                + "\nDuration: " + activeAudio.getDuration()
-//                + "\nYear: " + activeAudio.getYear());
-
-        Log.d(TAG, "updateTrackInfo: " + "\nAlbum: " + activeAudio.getAlbum()
-                + "\nArtist: " + activeAudio.getArtist()
-                + "\nData: " + activeAudio.getData()
-                + "\nTitle: " + activeAudio.getTitle()
-                + "\nDisplay name: " + activeAudio.getDisplay_name()
-                + "\nDuration: " + activeAudio.getDuration()
-                + "\nYear: " + activeAudio.getYear());
-
-//        ImageView album_art = findViewById(R.id.album_art);
 
         MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
         metadataRetriever.setDataSource(activeAudio.getData());
@@ -297,11 +403,9 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             art = metadataRetriever.getEmbeddedPicture();
             Bitmap song_cover = BitmapFactory.decodeByteArray(art, 0, art.length);
-//            album_art.setImageBitmap(song_cover);
             Log.d(TAG, "updateTrackInfo: " + song_cover);
 
         } catch (Exception e){
-//            album_art.setBackgroundColor(Color.GRAY);
             e.printStackTrace();
         }
 
@@ -312,7 +416,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     private void loadAudio(){
 
-        //Меню с просьбой подтвердить разрешение
 
         if (!checkPermissionForReadExtertalStorage()){
             try {
@@ -323,6 +426,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             } else {
 
+            audioList.clear();
 
             ContentResolver contentResolver = getContentResolver();
 
@@ -330,8 +434,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
-            // TODO PREFS EDITOR
-            String setOrder = MediaStore.Audio.Media.DATE_MODIFIED + " DESC";
+            String setOrder = createOrderString();
             Cursor cursor = contentResolver.query(uri, null, selection, null, setOrder);
 
 
@@ -347,11 +450,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                     Long lastchange = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED));
 
 
-                    //metadataRetriever.setDataSource(data);
-                    //byte[] image = metadataRetriever.getEmbeddedPicture();
-
-
-                    Log.d(TAG, "loadAudio: " + title);
 
 
                    // audioList.add(new Audio(data, title, album, artist, display_name, duration, year, image));
@@ -366,13 +464,38 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         }
     }
 
-    private void orderList(int orderParametr){
-        // 00 — Title asc
-        // 01 — Title desc
-        // 10 — Date asc
-        // 11 — Date desc
-        // 20 — Album asc
-        // 21 — Album desc
+    private String createOrderString(){
+
+        // 1 - Sort by date
+        // 2 - Sort by artist
+        // 3 - Sort by title
+        // 4 - Sort by album
+        String s = "";
+
+        switch (prefs.getInt("order_option", 3)){
+            case 1:
+                s = s.concat(MediaStore.Audio.Media.DATE_MODIFIED);
+                break;
+            case 2:
+                s = s.concat(MediaStore.Audio.Media.ARTIST);
+                break;
+            case 3:
+                s = s.concat(MediaStore.Audio.Media.TITLE);
+                break;
+            case 4:
+                s = s.concat(MediaStore.Audio.Media.ALBUM);
+                break;
+            default:
+                break;
+        }
+
+        if (prefs.getBoolean("order_reverseOrder", false)){
+            s = s.concat(" ASC");
+        } else {
+            s = s.concat(" DESC");
+        }
+
+        return s;
 
 
 
@@ -434,9 +557,12 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         if (audioIndex != -1) {
 
             if (articleFrag != null) {
-
-                articleFrag.changeSongInfo(audioListfragment.get(audioIndex).getArtist(), audioListfragment.get(audioIndex).getTitle());
-
+                try {
+                    articleFrag.changeSongInfo(audioListfragment.get(audioIndex).getArtist(), audioListfragment.get(audioIndex).getTitle());
+                } catch (Exception e){
+                    e.printStackTrace();
+                    articleFrag.changeSongInfo("", "");
+                }
             } else {
 
                 BlankFragment newFragment = new BlankFragment();

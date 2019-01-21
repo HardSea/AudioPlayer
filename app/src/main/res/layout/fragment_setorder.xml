@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/system_profile_dialog"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@drawable/border_set2"
+    android:orientation="vertical"
+    android:paddingLeft="30dp"
+    android:paddingRight="30dp"
+    android:paddingBottom="30dp">
+
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="10dp"
+        android:text="Сортування"
+        android:textColor="@color/black"
+        android:textSize="20sp" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup_setOrder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="left">
+
+        <RadioButton
+            android:id="@+id/radioButtonDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="serif"
+            android:text="По даті"
+            android:padding="8dp"
+            android:textSize="18sp" />
+
+        <RadioButton
+            android:id="@+id/radioButtonArtist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="serif"
+            android:text="По артисту"
+            android:padding="8dp"
+            android:textSize="18sp" />
+
+        <RadioButton
+            android:id="@+id/radioButtonTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="serif"
+            android:text="По назві"
+            android:padding="8dp"
+            android:textSize="18sp" />
+
+        <RadioButton
+            android:id="@+id/radioButtonAlbum"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="serif"
+            android:text="По альбому"
+            android:padding="8dp"
+            android:textSize="18sp" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/reverseOrder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Зворотний порядок" />
+
+        <Button
+            android:id="@+id/setOrder_confirmBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/border_set2"
+            android:padding="-5dp"
+            android:layout_marginStart="15dp"
+            android:text="Ок" />
+    </LinearLayout>
+
+</LinearLayout>

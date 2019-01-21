@@ -56,8 +56,9 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     public static final String ACTION_PLAY = "com.hillywave.audioplayer.ACTION_PLAY";
     public static final String ACTION_PAUSE = "com.hillywave.audioplayer.ACTION_PAUSE";
     public static final String ACTION_PREVIOUS = "com.hillywave.audioplayer.ACTION_PREVIOUS";
+    public static final String ACTION_CLOSE = "com.hillywave.audioplayer.ACTION_CLOSE";
     public static final String ACTION_NEXT = "com.hillywave.audioplayer.ACTION_NEXT";
-    public static final String ACTION_STOP = "com.hillywave.audioplayer.ACTION_STOP";
+    //public static final String ACTION_STOP = "com.hillywave.audioplayer.ACTION_STOP";
 
     private MediaSessionManager mediaSessionManager;
     private MediaSessionCompat mediaSession;
@@ -371,6 +372,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
         notificationLayout.setOnClickPendingIntent(R.id.btnPrev,  playbackAction(3));
         notificationLayout.setOnClickPendingIntent(R.id.btnPause, play_pauseAction);
         notificationLayout.setOnClickPendingIntent(R.id.btnNext, playbackAction(2));
+        notificationLayout.setOnClickPendingIntent(R.id.btnClose, playbackAction(4));
 
         PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -396,6 +398,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
         notificationManager.cancel(MainActivity.NOTIFICATION_ID);
     }
 
+
     public PendingIntent playbackAction(int actionNumber){
         Intent playbackAction = new Intent(this, MediaPlayerService.class);
         switch (actionNumber){
@@ -418,7 +421,9 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
                 // Previous track
                 playbackAction.setAction(ACTION_PREVIOUS);
                 return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-
+            case 4:
+                playbackAction.setAction(ACTION_CLOSE);
+                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
             default:
                 break;
         }
@@ -437,7 +442,10 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
             transportControls.skipToNext();
         } else if (actionString.equalsIgnoreCase(ACTION_PREVIOUS)){
             transportControls.skipToPrevious();
-        } else if (actionString.equalsIgnoreCase(ACTION_STOP)){
+       // } else if (actionString.equalsIgnoreCase(ACTION_STOP)){
+       //     transportControls.stop();
+        } else if (actionString.equalsIgnoreCase(ACTION_CLOSE)){
+            transportControls.pause();
             transportControls.stop();
         }
     }
