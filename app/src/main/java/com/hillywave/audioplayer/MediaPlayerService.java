@@ -206,11 +206,22 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
     }
 
+    private BroadcastReceiver updatePlaylist = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            audioList.clear();
+            audioList = new StorageUtil(context).loadAudio();
+
+        }
+    };
+
     private BroadcastReceiver playNewAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             audioIndex = new StorageUtil(getApplicationContext()).loadAudioIndex();
             Log.d("Audio index", "MediaPlayerService broadcast receiver: " + audioIndex);
+            Log.d("Audio index", "MediaPlayerService broadcast receiver: " + audioList.size());
+
             if (audioIndex != -1 && audioIndex < audioList.size()){
                 activeAudio = audioList.get(audioIndex);
             } else {
@@ -229,6 +240,9 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     private void register_PlayNewAudio(){
         IntentFilter filter = new IntentFilter(MainActivity.Broadcast_PLAY_NEW_AUDIO);
         registerReceiver(playNewAudio, filter);
+        IntentFilter filter2 = new IntentFilter(MainActivity.Broadcast_UPDATE_PLAYLIST);
+        registerReceiver(updatePlaylist, filter2);
+
     }
 
 
@@ -445,8 +459,23 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
        // } else if (actionString.equalsIgnoreCase(ACTION_STOP)){
        //     transportControls.stop();
         } else if (actionString.equalsIgnoreCase(ACTION_CLOSE)){
-            transportControls.pause();
-            transportControls.stop();
+//                mediaPlayer = null;
+                transportControls.pause();
+                transportControls.stop();
+                removeNotification();
+        }
+    }
+
+    private void releaseMediaPlayer() {
+        try {
+            if (mediaPlayer != null) {
+                if (mediaPlayer.isPlaying())
+                    mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -509,6 +538,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
         mHandler.post(new Runnable() {
             @Override
             public void run() {
+                try {
 
                 Intent intent = new Intent(MainActivity.RECEIVER_INTENT);
                 if(mediaPlayer != null){
@@ -526,7 +556,14 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
                     //((MainActivity)getApplicationContext()).setSeekBarProgress(mCurrentPosition);
 
                 }
+
                 mHandler.postDelayed(this, 1000);
+
+                } catch (Exception e){
+                    e.printStackTrace();
+                    mHandler.removeCallbacks(this);
+                }
+
             }
         });
 
@@ -555,6 +592,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
         unregisterReceiver(becomingNoisyReciever);
         unregisterReceiver(playNewAudio);
+        unregisterReceiver(updatePlaylist);
 
         new StorageUtil(getApplicationContext()).clearCachedAudioPlayList();
     }

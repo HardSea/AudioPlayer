@@ -29,6 +29,15 @@ public class StorageUtil {
         editor.apply();
     }
 
+
+    public void clearList(){
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.remove("audioArrayList");
+        editor.apply();
+    }
+
+
     public ArrayList<Audio> loadAudio(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         Gson gson = new Gson();

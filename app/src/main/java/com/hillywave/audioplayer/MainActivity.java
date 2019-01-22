@@ -2,6 +2,7 @@ package com.hillywave.audioplayer;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.hillywave.audioplayer.PlayNewAudio";
+    public static final String Broadcast_UPDATE_PLAYLIST = "com.hillywave.audioplayer.UpdatePlaylist";
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String CURRENT_POSITION = "RECEIVER_MESSAGE";
     public static final String ALL_DURATION = "RECEIVER_MESSAGE2";;
@@ -249,6 +251,9 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
                 loadAudio();
                 adapter.notifyDataSetChanged();
+
+                Intent i = new Intent(Broadcast_UPDATE_PLAYLIST);
+                sendBroadcast(i);
             }
         });
 
@@ -337,7 +342,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         StorageUtil storage = new StorageUtil(getApplicationContext());
 
         if (!serviceBound){
-            storage.storeAudio(audioList);
+
             storage.storeAudioIndex(position);
             Log.d("Audio index", "Play audio in main activity: " + position);
 
@@ -368,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         if (storage.loadAudioIndex() != -1) {
 
             if (!serviceBound) {
-                storage.storeAudio(audioList);
+
 
 
                 Intent playerIntent = new Intent(this, MediaPlayerService.class);
@@ -427,6 +432,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             } else {
 
             audioList.clear();
+            new StorageUtil(getApplicationContext()).clearList();
 
             ContentResolver contentResolver = getContentResolver();
 
@@ -456,7 +462,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                     audioList.add(new Audio(data, title, album, artist, display_name, duration, year, lastchange));
 
                 }
-
+                new StorageUtil(getApplicationContext()).storeAudio(audioList);
             }
 
             assert cursor != null;
