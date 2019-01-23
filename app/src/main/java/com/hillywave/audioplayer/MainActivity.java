@@ -1,9 +1,6 @@
 package com.hillywave.audioplayer;
 
 import android.Manifest;
-import android.app.Dialog;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -16,35 +13,25 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.widget.ViewDragHelper;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
@@ -52,11 +39,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements BlankFragment.OnFragmentInteractionListener{
@@ -64,12 +51,21 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private MediaPlayerService player;
     boolean serviceBound = false;
     private ArrayList<Audio> audioList;
+
+    private MediaMetadataRetriever mMetadataRetriever;
+
     private RecyclerView.Adapter adapter;
     private RecyclerView recyclerView;
     private Toolbar toolBar;
     private ImageButton sortBtn;
+    private ImageView imgAlbumCover;
+
+    private SlidingUpPanelLayout slidingLayout;
+
+    private BroadcastReceiver mBroadcastReceiver;
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
+
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.hillywave.audioplayer.PlayNewAudio";
     public static final String Broadcast_UPDATE_PLAYLIST = "com.hillywave.audioplayer.UpdatePlaylist";
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
@@ -78,11 +74,11 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public static final String ACTION = "RECEIVER_MESSAGE3";
     public static final int CHANGE_SEEKBAR = 15511;
     public static final int NEW_AUDIO = 14411;
-    //public static final String PLAY_STATUS = "RECEIVER_MESSAGE3";
-    private static final String TAG = "MainActivity";
-    private BroadcastReceiver mBroadcastReceiver;
-    private boolean playBackstatus = false;
     public static final int NOTIFICATION_ID = 114411;
+    private static final String TAG = "MainActivity";
+
+    //public static final String PLAY_STATUS = "RECEIVER_MESSAGE3";
+    private boolean playBackstatus = false;
 
 
     @Override
@@ -101,10 +97,39 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             }
         });
 
+        mMetadataRetriever = new MediaMetadataRetriever();
+        imgAlbumCover = findViewById(R.id.img_album_cover);
+
         prefs = getApplicationContext().getSharedPreferences("default_preference", MODE_PRIVATE);
         editor = prefs.edit();
         editor.apply();
+        slidingLayout =  findViewById(R.id.sliding_layout);
+        slidingLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
 
+            }
+
+            @Override
+            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+
+                switch (newState){
+                    case COLLAPSED:
+                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+                        break;
+                    case EXPANDED:
+                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
+                    case DRAGGING:
+                         if (previousState ==SlidingUpPanelLayout.PanelState.COLLAPSED){
+                            panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
+
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
 
 
         mBroadcastReceiver = new BroadcastReceiver() {
@@ -565,10 +590,21 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             if (articleFrag != null) {
                 try {
                     articleFrag.changeSongInfo(audioListfragment.get(audioIndex).getArtist(), audioListfragment.get(audioIndex).getTitle());
+
                 } catch (Exception e){
                     e.printStackTrace();
                     articleFrag.changeSongInfo("", "");
                 }
+
+                mMetadataRetriever.setDataSource(audioListfragment.get(audioIndex).getData());
+                byte[] data = mMetadataRetriever.getEmbeddedPicture();
+                if(data != null){
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    imgAlbumCover.setImageBitmap(bitmap);
+                } else {
+                    imgAlbumCover.setImageResource(R.drawable.image);
+                }
+
             } else {
 
                 BlankFragment newFragment = new BlankFragment();
@@ -664,7 +700,12 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     }
 
-
-
-
+    @Override
+    public void onBackPressed() {
+        if (slidingLayout != null && (slidingLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED || slidingLayout.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED)){
+            slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        } else {
+            super.onBackPressed();
+        }
+    }
 }
