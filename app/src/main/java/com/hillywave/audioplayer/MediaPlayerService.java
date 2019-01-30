@@ -246,11 +246,13 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     }
 
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+
     private void initMediaSession() throws RemoteException{
         if (mediaSessionManager != null) return;
 
-        mediaSessionManager = (MediaSessionManager) getApplicationContext().getSystemService(Context.MEDIA_SESSION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mediaSessionManager = (MediaSessionManager) getApplicationContext().getSystemService(Context.MEDIA_SESSION_SERVICE);
+        }
 
         mediaSession = new MediaSessionCompat(getApplicationContext(), "AudioPlayer");
 

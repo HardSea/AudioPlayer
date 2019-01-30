@@ -1,7 +1,6 @@
 package com.hillywave.audioplayer;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -11,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 public class BlankFragment extends Fragment {
@@ -55,7 +53,7 @@ public class BlankFragment extends Fragment {
         Log.d(TAG, "onCreateView");
 
 
-        View view = inflater.inflate(R.layout.fragment_box, container, false);
+        View view = inflater.inflate(R.layout.fragment_items_rv, container, false);
         btnprev = view.findViewById(R.id.btnPrev);
         btnPause = view.findViewById(R.id.btnPause);
         btnNext = view.findViewById(R.id.btnNext);

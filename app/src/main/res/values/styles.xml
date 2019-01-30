@@ -13,4 +13,12 @@
         <item name="android:windowExitAnimation">@anim/popup_hide</item>
     </style>
 
+    <style name="SeekBar" parent="Widget.AppCompat.SeekBar">
+        <item name="colorAccent">#bdbdbd</item>
+    </style>
+
+    <style name="SeekBar2" parent="Widget.AppCompat.SeekBar">
+        <item name="colorAccent">#9e9e9e</item>
+    </style>
+
 </resources>

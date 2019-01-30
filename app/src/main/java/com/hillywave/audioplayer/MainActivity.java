@@ -1,6 +1,7 @@
 package com.hillywave.audioplayer;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -14,6 +15,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
@@ -28,10 +30,15 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
@@ -39,11 +46,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioGroup;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements BlankFragment.OnFragmentInteractionListener{
@@ -59,6 +69,19 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private Toolbar toolBar;
     private ImageButton sortBtn;
     private ImageView imgAlbumCover;
+    private SeekBar seekBarPlayer;
+    private SeekBar seekBarVolume;
+    private TextView textView_currentTime;
+    private TextView textView_allTime;
+    private TextView textView_titleSong;
+    private TextView textView_artistSong;
+    private TextView textView_cntSong;
+    private ImageButton btnRepeatPlayer;
+    private ImageButton btnPrevPlayer;
+    private ImageButton btnPlayPlayer;
+    private ImageButton btnNextPlayer;
+    private ImageButton btnRandomPlayer;
+
 
     private SlidingUpPanelLayout slidingLayout;
 
@@ -66,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
 
+    private AudioManager audioManager;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.hillywave.audioplayer.PlayNewAudio";
     public static final String Broadcast_UPDATE_PLAYLIST = "com.hillywave.audioplayer.UpdatePlaylist";
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
@@ -77,13 +101,11 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public static final int NOTIFICATION_ID = 114411;
     private static final String TAG = "MainActivity";
 
-    //public static final String PLAY_STATUS = "RECEIVER_MESSAGE3";
-    private boolean playBackstatus = false;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
         setContentView(R.layout.activity_main);
 
         toolBar = findViewById(R.id.toolBar);
@@ -97,39 +119,36 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             }
         });
 
+
+
+
+        seekBarPlayer = findViewById(R.id.seekBar2);
+        seekBarPlayer.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                textView_currentTime.setText(convertTime(seekBar.getProgress()));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                changeTimeSong(seekBarPlayer.getProgress() * 1000);
+                textView_currentTime.setText(convertTime(seekBar.getProgress()));
+            }
+        });
+
+        initPlayerElements();
+
         mMetadataRetriever = new MediaMetadataRetriever();
         imgAlbumCover = findViewById(R.id.img_album_cover);
 
         prefs = getApplicationContext().getSharedPreferences("default_preference", MODE_PRIVATE);
         editor = prefs.edit();
         editor.apply();
-        slidingLayout =  findViewById(R.id.sliding_layout);
-        slidingLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
-            @Override
-            public void onPanelSlide(View panel, float slideOffset) {
 
-            }
-
-            @Override
-            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
-
-                switch (newState){
-                    case COLLAPSED:
-                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
-                        break;
-                    case EXPANDED:
-                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
-                    case DRAGGING:
-                         if (previousState ==SlidingUpPanelLayout.PanelState.COLLAPSED){
-                            panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
-
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
 
 
         mBroadcastReceiver = new BroadcastReceiver() {
@@ -160,7 +179,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
         audioList = new ArrayList<>();
 
-      //loadAudio();
 
         if (!checkPermissionForReadExtertalStorage()) {
             try {
@@ -172,13 +190,120 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             createlist();
         }
 
-       // initRecyclerView();
+    }
 
-        //Toast.makeText(this, String.valueOf(checkPermissionForReadExtertalStorage()), Toast.LENGTH_SHORT).show();
+    private void initPlayerElements(){
+        textView_allTime = findViewById(R.id.textView_allTime);
+        textView_currentTime = findViewById(R.id.textView_currentTime);
+        textView_titleSong = findViewById(R.id.textView_titleSong);
+        textView_artistSong = findViewById(R.id.textView_artistSong);
+        textView_cntSong = findViewById(R.id.textView_cntSong);
 
+        seekBarVolume= findViewById(R.id.seekBarVolume);
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+        btnRepeatPlayer =findViewById(R.id.btnRepeatPlayer);
+        btnPrevPlayer =findViewById(R.id.btnPrevPlayer);
+        btnPlayPlayer =findViewById(R.id.btnPlayPlayer);
+        btnNextPlayer =findViewById(R.id.btnNextPlayer);
+        btnRandomPlayer =findViewById(R.id.btnRandomPlayer);
+
+
+        slidingLayout =  findViewById(R.id.sliding_layout);
+        slidingLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
+
+            }
+
+            @Override
+            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+
+                switch (newState){
+                    case COLLAPSED:
+                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+                        break;
+                    case EXPANDED:
+                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
+                    case DRAGGING:
+                        if (previousState == SlidingUpPanelLayout.PanelState.COLLAPSED){
+                            panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
+                        } else if (previousState == SlidingUpPanelLayout.PanelState.EXPANDED){
+                            panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+
+
+        seekBarVolume.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+        seekBarVolume.setProgress(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, seekBar.getProgress(), 0);
+            }
+        });
+
+        btnRepeatPlayer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+
+        btnPrevPlayer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                prevSong();
+            }
+        });
+
+        btnPlayPlayer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pauseSong();
+                if (new StorageUtil(getApplicationContext()).getPlaybackStatus()) {
+                    btnPlayPlayer.setImageResource(R.drawable.ico_pause);
+                } else {
+                    btnPlayPlayer.setImageResource(R.drawable.ico_play);
+                }
+            }
+        });
+
+        btnNextPlayer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nextSong();
+            }
+        });
+
+        btnRandomPlayer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
 
 
     }
+
+
+
 
     private void callSortDialog(){
 //        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -364,6 +489,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     //void playAudio(String media){
     void playAudio(int position){
+        Log.d(TAG, "prevSong: " + position);
         StorageUtil storage = new StorageUtil(getApplicationContext());
 
         if (!serviceBound){
@@ -387,6 +513,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             //Send media with BroadcastReceiver
 
         }
+        recyclerView.smoothScrollToPosition(position);
         updateTrackInfo();
         changeButtonBoxInfo();
 
@@ -424,6 +551,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private void updateTrackInfo(){
             StorageUtil storage = new StorageUtil(getApplicationContext());
             int pos = storage.loadAudioIndex();
+
         Audio activeAudio =  audioList.get(pos);
 
         MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
@@ -596,15 +724,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                     articleFrag.changeSongInfo("", "");
                 }
 
-                mMetadataRetriever.setDataSource(audioListfragment.get(audioIndex).getData());
-                byte[] data = mMetadataRetriever.getEmbeddedPicture();
-                if(data != null){
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                    imgAlbumCover.setImageBitmap(bitmap);
-                } else {
-                    imgAlbumCover.setImageResource(R.drawable.image);
-                }
-
             } else {
 
                 BlankFragment newFragment = new BlankFragment();
@@ -620,10 +739,37 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                 transaction.addToBackStack(null);
                 transaction.commit();
             }
+
+            changePlayerLayout(audioListfragment.get(audioIndex).getData(), audioListfragment.get(audioIndex).getTitle(), audioListfragment.get(audioIndex).getArtist(), audioIndex, audioListfragment.size());
         }
     }
 
+    private void changePlayerLayout(String imageData, String titleSong, String artistSong, int position, int allSongCnt){
+        mMetadataRetriever.setDataSource(imageData);
+        byte[] data = mMetadataRetriever.getEmbeddedPicture();
+        if(data != null){
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            imgAlbumCover.setImageBitmap(bitmap);
+        } else {
+            imgAlbumCover.setImageResource(R.drawable.image);
+
+
+        }
+
+        textView_titleSong.setText(titleSong);
+        textView_artistSong.setText(artistSong);
+        textView_cntSong.setText((position + 1) + " з " + (allSongCnt + 1));
+
+    }
+
     public void setSeekBarProgress(int progress, int allProgrss){
+
+        seekBarPlayer.setMax(allProgrss);
+        seekBarPlayer.setProgress(progress);
+
+        textView_currentTime.setText(convertTime(progress));
+        textView_allTime.setText(convertTime(allProgrss));
+
 
         StorageUtil storage = new StorageUtil(getApplicationContext());
         int audioIndex = storage.loadAudioIndex();
@@ -637,6 +783,11 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
 
             articleFrag.changeButton();
+            if (new StorageUtil(getApplicationContext()).getPlaybackStatus()){
+                btnPlayPlayer.setImageResource(R.drawable.ico_pause);
+            } else {
+                btnPlayPlayer.setImageResource(R.drawable.ico_play);
+            }
 
 
         } else {
@@ -655,15 +806,19 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             transaction.commit();
         }
 
+
     }
 
     @Override
     public void prevSong() {
 
-        Log.d(TAG, "prevSong: " + player.getCurrentPos());
-
         StorageUtil storage = new StorageUtil(getApplicationContext());
-        storage.minusIndex();
+        if (storage.loadAudioIndex() - 1 >= 0) {
+            storage.minusIndex();
+        } else if (storage.loadAudioIndex() - 1 < 0){
+            storage.storeAudioIndex(audioList.size() - 1);
+        }
+        Log.d(TAG, "prevSong: " + storage.loadAudioIndex() );
         playAudio(storage.loadAudioIndex());
         changeButtonBoxInfo();
 
@@ -687,17 +842,49 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public void nextSong() {
 
         StorageUtil storage = new StorageUtil(getApplicationContext());
-        storage.plusIndex();
+
+        if (storage.loadAudioIndex() + 1 < audioList.size()) {
+            storage.plusIndex();
+        } else if (storage.loadAudioIndex() + 1 > audioList.size() - 1){
+            storage.storeAudioIndex(0);
+        }
+
         playAudio(storage.loadAudioIndex());
         changeButtonBoxInfo();
+
 
     }
 
     @Override
     public void changeTimeSong(int i) {
+            if (player != null){
+                player.resumeMedia(i);
+            }else {
+                playAudio();
+            }
 
-            player.resumeMedia(i);
+    }
 
+    private String convertTime(long time){
+        long second = (time) % 60;
+        long minute = (time / (60)) % 60;
+        return String.format( Locale.getDefault(), "%02d:%02d", minute, second);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode){
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
+                seekBarVolume.setProgress(seekBarVolume.getProgress() + 1);
+                return true;
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI);
+                seekBarVolume.setProgress(seekBarVolume.getProgress() - 1);
+                return true;
+            default:
+                return super.onKeyDown(keyCode, event);
+        }
     }
 
     @Override
