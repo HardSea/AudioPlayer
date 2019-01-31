@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.logging.Handler;
 
 public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
 
@@ -46,12 +47,33 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
 
 
 
-//            try{
-//                holder.albumCover.setImageBitmap(audioList.get(position).getImage());
-//
-//            }catch (Exception e){
-//                e.printStackTrace();
-//            }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                MediaMetadataRetriever mMetadataRetriever = new MediaMetadataRetriever();
+                mMetadataRetriever.setDataSource(audioList.get(holder.getAdapterPosition()).getData());
+                final byte[] data = mMetadataRetriever.getEmbeddedPicture();
+                Bitmap bitmap = null;
+                if(data != null) {
+                    bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                }
+
+                final Bitmap finalBitmap = bitmap;
+
+                MainActivity.runOnUi(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (finalBitmap != null){
+                            holder.albumCover.setImageBitmap(finalBitmap);
+                        } else {
+                            holder.albumCover.setImageResource(R.drawable.image);
+                        }
+                    }
+                });
+            }
+
+        }).start();
+
 
 
 

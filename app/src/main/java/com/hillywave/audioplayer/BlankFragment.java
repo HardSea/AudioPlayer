@@ -109,6 +109,10 @@ public class BlankFragment extends Fragment {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
 
+                if (!(new StorageUtil(getContext()).getPlaybackStatus())){
+                    onButtonPressedPause();
+                }
+
                 mListener.changeTimeSong(seekBar.getProgress() * 1000);
 
             }

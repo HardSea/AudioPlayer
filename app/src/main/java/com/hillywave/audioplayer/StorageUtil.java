@@ -52,7 +52,6 @@ public class StorageUtil {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("audioIndex", index);
         editor.apply();
-        Log.d("Audio index", "StorageUtil storeaudioindex: " + index);
     }
 
     public int loadAudioIndex(){
@@ -83,7 +82,7 @@ public class StorageUtil {
     }
 
     public void setPlaybackStatus(boolean playbackstatus){
-        Log.d("setPlaybackStatus", "setPlaybackStatus: " + playbackstatus);
+
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("playbackStatus", playbackstatus);
@@ -93,8 +92,52 @@ public class StorageUtil {
 
     public boolean getPlaybackStatus(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
-        Log.d("setPlaybackStatus", "getPlaybackStatus: " + preferences.getBoolean("playbackStatus", false));
         return preferences.getBoolean("playbackStatus", false);
+    }
+
+    public int getRepeatStatus(){
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getInt("repeatStatus", 1);
+    }
+
+    public void changeRepeatStatus(){
+        // 0 - no repeat
+        // 1 - repeat list
+        // 2 - repeat one
+
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        int repeatStatus = preferences.getInt("repeatStatus", 1);
+
+        if (repeatStatus == 2){
+            repeatStatus = 0;
+        } else {
+            repeatStatus++;
+        }
+
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("repeatStatus", repeatStatus);
+        editor.apply();
+
+    }
+
+    public boolean getShuffleStatus(){
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getBoolean("shuffleStatus", false);
+    }
+
+    public void changeShuffleStatus(){
+        // 0 - no random
+        // 1 - random
+
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        boolean shuffleStatus = preferences.getBoolean("shuffleStatus", false);
+
+        shuffleStatus = !shuffleStatus;
+
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("shuffleStatus", shuffleStatus);
+        editor.apply();
+
     }
 
 

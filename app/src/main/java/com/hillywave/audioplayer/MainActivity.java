@@ -1,7 +1,6 @@
 package com.hillywave.audioplayer;
 
 import android.Manifest;
-import android.animation.ObjectAnimator;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -19,7 +18,9 @@ import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -30,15 +31,11 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
@@ -55,6 +52,8 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Random;
+
 
 public class MainActivity extends AppCompatActivity implements BlankFragment.OnFragmentInteractionListener{
 
@@ -80,10 +79,12 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     private ImageButton btnPrevPlayer;
     private ImageButton btnPlayPlayer;
     private ImageButton btnNextPlayer;
-    private ImageButton btnRandomPlayer;
+    private ImageButton btnShufflePlayer;
 
 
     private SlidingUpPanelLayout slidingLayout;
+
+    public static Handler UIHandler;
 
     private BroadcastReceiver mBroadcastReceiver;
     private SharedPreferences prefs;
@@ -100,6 +101,10 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public static final int NEW_AUDIO = 14411;
     public static final int NOTIFICATION_ID = 114411;
     private static final String TAG = "MainActivity";
+
+    static {
+        UIHandler = new Handler(Looper.getMainLooper());
+    }
 
 
     @Override
@@ -135,6 +140,10 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                if (!(new StorageUtil(getApplicationContext()).getPlaybackStatus())){
+                    pauseSong();
+                }
+
                 changeTimeSong(seekBarPlayer.getProgress() * 1000);
                 textView_currentTime.setText(convertTime(seekBar.getProgress()));
             }
@@ -206,7 +215,10 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         btnPrevPlayer =findViewById(R.id.btnPrevPlayer);
         btnPlayPlayer =findViewById(R.id.btnPlayPlayer);
         btnNextPlayer =findViewById(R.id.btnNextPlayer);
-        btnRandomPlayer =findViewById(R.id.btnRandomPlayer);
+        btnShufflePlayer =findViewById(R.id.btnRandomPlayer);
+
+        changeRepeatButton();
+        changeShuffleButton();
 
 
         slidingLayout =  findViewById(R.id.sliding_layout);
@@ -262,7 +274,12 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         btnRepeatPlayer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // 0 - no repeat
+                // 1 - repeat list
+                // 2 - repeat one
 
+                new StorageUtil(getApplicationContext()).changeRepeatStatus();
+                changeRepeatButton();
             }
         });
 
@@ -292,14 +309,41 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             }
         });
 
-        btnRandomPlayer.setOnClickListener(new View.OnClickListener() {
+        btnShufflePlayer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                new StorageUtil(getApplicationContext()).changeShuffleStatus();
+                changeShuffleButton();
 
             }
         });
+    }
 
 
+    private void changeShuffleButton(){
+        if (new StorageUtil(getApplicationContext()).getShuffleStatus()){
+            btnShufflePlayer.setImageResource(R.drawable.ico_shuffle);
+        } else {
+            btnShufflePlayer.setImageResource(R.drawable.ico_shuffle_white);
+        }
+    }
+
+    private void changeRepeatButton(){
+        switch (new StorageUtil(getApplicationContext()).getRepeatStatus()){
+
+            case 0:
+                btnRepeatPlayer.setImageResource(R.drawable.ico_repeat_white);
+                break;
+            case 1:
+                btnRepeatPlayer.setImageResource(R.drawable.ico_repeat);
+                break;
+            case 2:
+                btnRepeatPlayer.setImageResource(R.drawable.ico_repeat_one);
+                break;
+
+            default:
+                break;
+        }
     }
 
 
@@ -436,6 +480,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         Log.d(TAG, "initRecyclerView: ");
         if (audioList.size() > 0){
             recyclerView = findViewById(R.id.recyclerview);
+            recyclerView.setHasFixedSize(true);
             adapter = new RecyclerView_Adapter(audioList, this);
             recyclerView.setAdapter(adapter);
             RecyclerView.LayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
@@ -489,13 +534,11 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     //void playAudio(String media){
     void playAudio(int position){
-        Log.d(TAG, "prevSong: " + position);
         StorageUtil storage = new StorageUtil(getApplicationContext());
 
         if (!serviceBound){
 
             storage.storeAudioIndex(position);
-            Log.d("Audio index", "Play audio in main activity: " + position);
 
             Intent playerIntent = new Intent(this, MediaPlayerService.class);
             //playerIntent.putExtra("media", audioList.get(position).getData());
@@ -513,7 +556,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             //Send media with BroadcastReceiver
 
         }
-        recyclerView.smoothScrollToPosition(position);
+        recyclerView.scrollToPosition(position);
         updateTrackInfo();
         changeButtonBoxInfo();
 
@@ -744,21 +787,44 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         }
     }
 
-    private void changePlayerLayout(String imageData, String titleSong, String artistSong, int position, int allSongCnt){
-        mMetadataRetriever.setDataSource(imageData);
-        byte[] data = mMetadataRetriever.getEmbeddedPicture();
-        if(data != null){
-            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            imgAlbumCover.setImageBitmap(bitmap);
-        } else {
-            imgAlbumCover.setImageResource(R.drawable.image);
+    private void changePlayerLayout(final String imageData, String titleSong, String artistSong, int position, int allSongCnt){
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                    mMetadataRetriever.setDataSource(imageData);
+                    final byte[] data = mMetadataRetriever.getEmbeddedPicture();
+                    Bitmap bitmap = null;
+                    if(data != null) {
+                        bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    }
+
+                    final Bitmap finalBitmap = bitmap;
+
+                    MainActivity.runOnUi(new Runnable() {
+                        @Override
+                        public void run() {
+                        if (finalBitmap != null){
+                            imgAlbumCover.setImageBitmap(finalBitmap);
+
+                        } else {
+                            imgAlbumCover.setImageResource(R.drawable.image);
+                        }
+                        }
+                    });
+                }
+
+        }).start();
 
 
-        }
+
+
+
+
 
         textView_titleSong.setText(titleSong);
         textView_artistSong.setText(artistSong);
-        textView_cntSong.setText((position + 1) + " з " + (allSongCnt + 1));
+        textView_cntSong.setText((position + 1) + " з " + allSongCnt);
 
     }
 
@@ -813,12 +879,13 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public void prevSong() {
 
         StorageUtil storage = new StorageUtil(getApplicationContext());
+
         if (storage.loadAudioIndex() - 1 >= 0) {
             storage.minusIndex();
         } else if (storage.loadAudioIndex() - 1 < 0){
             storage.storeAudioIndex(audioList.size() - 1);
         }
-        Log.d(TAG, "prevSong: " + storage.loadAudioIndex() );
+
         playAudio(storage.loadAudioIndex());
         changeButtonBoxInfo();
 
@@ -843,11 +910,21 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
         StorageUtil storage = new StorageUtil(getApplicationContext());
 
+
         if (storage.loadAudioIndex() + 1 < audioList.size()) {
             storage.plusIndex();
-        } else if (storage.loadAudioIndex() + 1 > audioList.size() - 1){
+        } else if (storage.loadAudioIndex() + 1 > audioList.size() - 1) {
             storage.storeAudioIndex(0);
         }
+
+
+        if (storage.getShuffleStatus()){
+
+            storage.storeAudioIndex((int)(Math.random() * audioList.size()));
+
+        }
+
+
 
         playAudio(storage.loadAudioIndex());
         changeButtonBoxInfo();
@@ -894,5 +971,9 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         } else {
             super.onBackPressed();
         }
+    }
+
+    public static void runOnUi(Runnable runnable){
+        UIHandler.post(runnable);
     }
 }
