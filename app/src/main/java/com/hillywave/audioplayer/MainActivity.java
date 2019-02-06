@@ -55,7 +55,7 @@ import java.util.Objects;
 import java.util.Random;
 
 
-public class MainActivity extends AppCompatActivity implements BlankFragment.OnFragmentInteractionListener{
+public class MainActivity extends AppCompatActivity implements BottomPlayerFragment.OnFragmentInteractionListener{
 
     private MediaPlayerService player;
     boolean serviceBound = false;
@@ -123,7 +123,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                 callSortDialog();
             }
         });
-
 
 
 
@@ -350,13 +349,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
 
     private void callSortDialog(){
-//        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-//        View v = LayoutInflater.from(this).inflate(R.layout.fragment_setorder, null, false);
-//        builder.setView(v);
-//        AlertDialog setSysProfileDialog = builder.create();
-//        setSysProfileDialog.show();
-
-
         final View layout = getLayoutInflater().inflate(R.layout.fragment_setorder, null, false);
         final RadioGroup radioGroup = layout.findViewById(R.id.radioGroup_setOrder);
         final CheckBox checkBox = layout.findViewById(R.id.reverseOrder);
@@ -534,6 +526,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     //void playAudio(String media){
     void playAudio(int position){
+        Log.d(TAG, "onCreate: " + new StorageUtil(getApplicationContext()).getPlaybackStatus());
+        Log.d(TAG, "onCreate: " +  (player == null));
         StorageUtil storage = new StorageUtil(getApplicationContext());
 
         if (!serviceBound){
@@ -567,8 +561,13 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         StorageUtil storage = new StorageUtil(getApplicationContext());
         if (storage.loadAudioIndex() != -1) {
 
-            if (!serviceBound) {
+            Log.d(TAG, "playAudio: " + serviceBound);
 
+            if (player == null){
+                serviceBound = false;
+            }
+
+            if (!serviceBound) {
 
 
                 Intent playerIntent = new Intent(this, MediaPlayerService.class);
@@ -585,6 +584,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                 //Send media with BroadcastReceiver
 
             }
+
             updateTrackInfo();
             changeButtonBoxInfo();
 
@@ -604,7 +604,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             art = metadataRetriever.getEmbeddedPicture();
             Bitmap song_cover = BitmapFactory.decodeByteArray(art, 0, art.length);
-            Log.d(TAG, "updateTrackInfo: " + song_cover);
 
         } catch (Exception e){
             e.printStackTrace();
@@ -739,6 +738,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     protected void onDestroy() {
         super.onDestroy();
         if (serviceBound){
+            pauseSong();
             unbindService(serviceConnection);
             player.stopSelf();
         }
@@ -754,8 +754,9 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         Log.d("Audio index", "Main Activity changebuttonBox Info: " + audioIndex);
         ArrayList<Audio> audioListfragment = storage.loadAudio();
 
-        BlankFragment articleFrag = (BlankFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
+        BottomPlayerFragment articleFrag = (BottomPlayerFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
 
+        Log.d(TAG, "changeButtonBoxInfo: " + articleFrag);
         if (audioIndex != -1) {
 
             if (articleFrag != null) {
@@ -769,7 +770,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
             } else {
 
-                BlankFragment newFragment = new BlankFragment();
+                BottomPlayerFragment newFragment = new BottomPlayerFragment();
                 Bundle args = new Bundle();
                 args.putString("audio_title", audioListfragment.get(audioIndex).getTitle());
                 args.putString("audio_artist", audioListfragment.get(audioIndex).getArtist());
@@ -817,11 +818,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         }).start();
 
 
-
-
-
-
-
         textView_titleSong.setText(titleSong);
         textView_artistSong.setText(artistSong);
         textView_cntSong.setText((position + 1) + " з " + allSongCnt);
@@ -842,7 +838,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         ArrayList<Audio> audioListfragment = storage.loadAudio();
 
 
-        BlankFragment articleFrag = (BlankFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
+        BottomPlayerFragment articleFrag = (BottomPlayerFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
 
         if (articleFrag != null) {
             articleFrag.changeSeekBarProgres(progress, allProgrss);
@@ -858,7 +854,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
         } else {
 
-            BlankFragment newFragment = new BlankFragment();
+            BottomPlayerFragment newFragment = new BottomPlayerFragment();
             Bundle args = new Bundle();
             args.putString("audio_title", audioListfragment.get(audioIndex).getTitle());
             args.putString("audio_artist", audioListfragment.get(audioIndex).getArtist());
@@ -901,6 +897,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                 player.resumeMedia();
             }
         } else {
+            new StorageUtil(getApplicationContext()).setPlaybackStatus(true);
             playAudio();
         }
     }
@@ -917,12 +914,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             storage.storeAudioIndex(0);
         }
 
-
-        if (storage.getShuffleStatus()){
-
-            storage.storeAudioIndex((int)(Math.random() * audioList.size()));
-
-        }
 
 
 

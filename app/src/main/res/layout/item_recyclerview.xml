@@ -4,10 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="8dp"
-    android:background="@drawable/border_set">
+    android:background="@drawable/border_set"
+    android:id="@+id/item_rv_layout">
 
     <ImageView
         android:id="@+id/albumCover"
+        android:src="@drawable/icon2"
         android:layout_width="50dp"
         android:layout_height="50dp" />
 

@@ -16,11 +16,11 @@ public class StorageUtil {
     private SharedPreferences preferences;
     private Context context;
 
-    public StorageUtil(Context context){
+    StorageUtil(Context context){
         this.context = context;
     }
 
-    public void storeAudio(ArrayList<Audio> arrayList){
+    void storeAudio(ArrayList<Audio> arrayList){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         Gson gson = new Gson();
@@ -30,7 +30,7 @@ public class StorageUtil {
     }
 
 
-    public void clearList(){
+    void clearList(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.remove("audioArrayList");
@@ -38,7 +38,7 @@ public class StorageUtil {
     }
 
 
-    public ArrayList<Audio> loadAudio(){
+    ArrayList<Audio> loadAudio(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         Gson gson = new Gson();
         String json = preferences.getString("audioArrayList", null);
@@ -47,41 +47,59 @@ public class StorageUtil {
         return gson.fromJson(json, type);
     }
 
-    public void storeAudioIndex(int index){
+    void storeAudioIndex(int index){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("audioIndex", index);
         editor.apply();
     }
 
-    public int loadAudioIndex(){
+    int loadAudioIndex(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getInt("audioIndex", -1);
     }
 
-    public void clearCachedAudioPlayList(){
+
+
+
+    void clearCachedAudioPlayList(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.clear();
         editor.apply();
     }
 
-    public void plusIndex(){
+    void plusIndex(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("audioIndex", preferences.getInt("audioIndex", -1) + 1);
+
+        if (getShuffleStatus()){
+
+            editor.putInt("audioIndex", ((int)(Math.random() * loadAudio().size())));
+
+        }
+
+
         editor.apply();
     }
 
-    public void minusIndex(){
+    void minusIndex(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("audioIndex", preferences.getInt("audioIndex", -1) - 1);
+
+        if (getShuffleStatus()){
+
+            editor.putInt("audioIndex", ((int)(Math.random() * loadAudio().size())));
+
+        }
+
         editor.apply();
 
     }
 
-    public void setPlaybackStatus(boolean playbackstatus){
+    void setPlaybackStatus(boolean playbackstatus){
 
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
@@ -90,17 +108,17 @@ public class StorageUtil {
 
     }
 
-    public boolean getPlaybackStatus(){
+    boolean getPlaybackStatus(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getBoolean("playbackStatus", false);
     }
 
-    public int getRepeatStatus(){
+    int getRepeatStatus(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getInt("repeatStatus", 1);
     }
 
-    public void changeRepeatStatus(){
+    void changeRepeatStatus(){
         // 0 - no repeat
         // 1 - repeat list
         // 2 - repeat one
@@ -120,12 +138,12 @@ public class StorageUtil {
 
     }
 
-    public boolean getShuffleStatus(){
+    boolean getShuffleStatus(){
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getBoolean("shuffleStatus", false);
     }
 
-    public void changeShuffleStatus(){
+    void changeShuffleStatus(){
         // 0 - no random
         // 1 - random
 

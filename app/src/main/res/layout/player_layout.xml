@@ -9,7 +9,7 @@
 
     <fragment
         android:id="@+id/fragment_box"
-        android:name="com.hillywave.audioplayer.BlankFragment"
+        android:name="com.hillywave.audioplayer.BottomPlayerFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="0dp"

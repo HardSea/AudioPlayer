@@ -12,11 +12,11 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 
-public class BlankFragment extends Fragment {
+public class BottomPlayerFragment extends Fragment {
 
     private static final String ARG_TITLE = "audio_title";
     private static final String ARG_ARTIST = "audio_artist";
-    private static final String TAG = "BlankFragment";
+    private static final String TAG = "BottomPlayerFragment";
 
 
     private String mTitle;
@@ -30,13 +30,13 @@ public class BlankFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    public BlankFragment() {  }
+    public BottomPlayerFragment() {  }
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate");
+
 
         if (getArguments() != null) Log.d(TAG, getArguments().toString());
 
@@ -49,8 +49,6 @@ public class BlankFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-        Log.d(TAG, "onCreateView");
 
 
         View view = inflater.inflate(R.layout.fragment_items_rv, container, false);
@@ -154,6 +152,8 @@ public class BlankFragment extends Fragment {
     }
 
     public void onButtonPressedPause() {
+        Log.d(TAG, "onButtonPressedPause: " + mListener);
+
         if (mListener != null) {
             mListener.pauseSong();
             if (new StorageUtil(getContext()).getPlaybackStatus()) {
@@ -161,8 +161,9 @@ public class BlankFragment extends Fragment {
             } else {
                 btnPause.setImageResource(android.R.drawable.ic_media_play);
             }
-
-
+        } else {
+            mListener = (OnFragmentInteractionListener) getContext();
+            onButtonPressedPause();
         }
     }
 

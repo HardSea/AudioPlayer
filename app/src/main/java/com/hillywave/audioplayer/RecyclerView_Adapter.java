@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.MediaMetadataRetriever;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
@@ -12,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
@@ -42,8 +44,7 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
         holder.setIsRecyclable(false);
         holder.title.setText(audioList.get(position).getTitle());
         holder.title2.setText(audioList.get(position).getArtist());
-        holder.albumCover.setImageResource(R.drawable.ic_launcher_foreground);
-
+        //holder.albumCover.setImageResource(R.drawable.ic_launcher_foreground);
 
 
 
@@ -66,7 +67,7 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
                         if (finalBitmap != null){
                             holder.albumCover.setImageBitmap(finalBitmap);
                         } else {
-                            holder.albumCover.setImageResource(R.drawable.image);
+                            //holder.albumCover.setImageResource(R.drawable.image);
                         }
                     }
                 });
@@ -82,7 +83,6 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
             @Override
             public void onClick(View view) {
                 ((MainActivity)context).playAudio(holder.getAdapterPosition());
-                Log.d("Audio index", "Service onClick: " + holder.getAdapterPosition());
             }
         });
 
@@ -100,6 +100,7 @@ class ViewHolder extends RecyclerView.ViewHolder{
     final TextView title;
     final TextView title2;
     final ImageView albumCover;
+    final LinearLayout linearLayoutRV;
 
     public ViewHolder(View itemView) {
         super(itemView);
@@ -107,6 +108,7 @@ class ViewHolder extends RecyclerView.ViewHolder{
         title = itemView.findViewById(R.id.title);
         title2 = itemView.findViewById(R.id.title2);
         albumCover = itemView.findViewById(R.id.albumCover);
+        linearLayoutRV = itemView.findViewById(R.id.item_rv_layout);
 
     }
 }
