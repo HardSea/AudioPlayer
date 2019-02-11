@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     private SlidingUpPanelLayout slidingLayout;
 
     public static Handler UIHandler;
+    public static boolean rvIsScrolling = false;
 
     private BroadcastReceiver mBroadcastReceiver;
     private SharedPreferences prefs;
@@ -476,6 +477,8 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             adapter = new RecyclerView_Adapter(audioList, this);
             recyclerView.setAdapter(adapter);
             RecyclerView.LayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+            FastScroller fastScroller = (FastScroller) findViewById(R.id.fastscroller);
+            fastScroller.setRecyclerView(recyclerView);
             lm.setAutoMeasureEnabled(false);
             recyclerView.setLayoutManager(lm);
 

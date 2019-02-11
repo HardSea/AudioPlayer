@@ -47,6 +47,7 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
         //holder.albumCover.setImageResource(R.drawable.ic_launcher_foreground);
 
 
+        if (!MainActivity.rvIsScrolling){
 
         new Thread(new Runnable() {
             @Override
@@ -74,6 +75,9 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
             }
 
         }).start();
+
+
+        }
 
 
 

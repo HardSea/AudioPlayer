@@ -196,12 +196,13 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
                             ongoingCall = true;
                         }
                     break;
-                    case TelephonyManager.CALL_STATE_IDLE:
-                        if (mediaPlayer != null){
-                            ongoingCall = false;
-                            resumeMedia();
-                        }
-                    break;
+                   //     RESUME AFTER CALLING
+                   // case TelephonyManager.CALL_STATE_IDLE:
+                   //     if (mediaPlayer != null){
+                   //         ongoingCall = false;
+                   //         resumeMedia();
+                   //     }
+                   // break;
                 }
 
             }
@@ -622,9 +623,11 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
     @Override
     public void onAudioFocusChange(int focusState) {
-
         switch (focusState){
             case AudioManager.AUDIOFOCUS_GAIN:
+                if (mediaPlayer.isPlaying()) mediaPlayer.setVolume(1f, 1f);
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 if (mediaPlayer.isPlaying()) mediaPlayer.setVolume(0.1f, 0.1f);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:

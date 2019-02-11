@@ -22,7 +22,8 @@
         android:hardwareAccelerated="false"
         android:largeHeap="true">
         <service android:name=".MediaPlayerService" android:enabled="true" />
-        <activity android:name=".MainActivity"
+        <activity
+            android:name=".MainActivity"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
