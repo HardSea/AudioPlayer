@@ -44,8 +44,6 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
         holder.setIsRecyclable(false);
         holder.title.setText(audioList.get(position).getTitle());
         holder.title2.setText(audioList.get(position).getArtist());
-        //holder.albumCover.setImageResource(R.drawable.ic_launcher_foreground);
-
 
         if (!MainActivity.rvIsScrolling){
 
@@ -67,8 +65,6 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder>{
                     public void run() {
                         if (finalBitmap != null){
                             holder.albumCover.setImageBitmap(finalBitmap);
-                        } else {
-                            //holder.albumCover.setImageResource(R.drawable.image);
                         }
                     }
                 });

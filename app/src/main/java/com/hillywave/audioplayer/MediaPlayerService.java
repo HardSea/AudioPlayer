@@ -140,14 +140,19 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     }
 
     void resumeMedia(){
-        if (mediaPlayer != null) {
-            if (!mediaPlayer.isPlaying()) {
-                mediaPlayer.seekTo(resumePosition);
-                mediaPlayer.start();
-                playstatus = true;
-                new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
-                buildNotification(PlaybackStatus.PLAYING);
+        try {
+            if (mediaPlayer != null) {
+                if (!mediaPlayer.isPlaying()) {
+                    mediaPlayer.seekTo(resumePosition);
+                    mediaPlayer.start();
+                    playstatus = true;
+                    new StorageUtil(getApplicationContext()).setPlaybackStatus(playstatus);
+                    buildNotification(PlaybackStatus.PLAYING);
+                }
             }
+        } catch (Exception e){
+            initMediaPlayer();
+            playMedia();
         }
     }
 
