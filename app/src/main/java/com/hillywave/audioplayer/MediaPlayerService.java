@@ -1,16 +1,12 @@
 package com.hillywave.audioplayer;
 
-import android.annotation.TargetApi;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.session.MediaSessionManager;
@@ -58,8 +54,6 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
     public static final String ACTION_PREVIOUS = "com.hillywave.audioplayer.ACTION_PREVIOUS";
     public static final String ACTION_CLOSE = "com.hillywave.audioplayer.ACTION_CLOSE";
     public static final String ACTION_NEXT = "com.hillywave.audioplayer.ACTION_NEXT";
-    //public static final String ACTION_STOP = "com.hillywave.audioplayer.ACTION_STOP";
-
     private MediaSessionManager mediaSessionManager;
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls transportControls;
@@ -260,7 +254,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
 
 
 
-    private void initMediaSession() throws RemoteException{
+    private void initMediaSession(){
         if (mediaSessionManager != null) return;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -547,7 +541,7 @@ public class MediaPlayerService extends Service implements  MediaPlayer.OnComple
             try {
                 initMediaSession();
                 initMediaPlayer();
-            } catch (RemoteException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 stopSelf();
             }

@@ -52,10 +52,9 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Random;
 
 
-public class MainActivity extends AppCompatActivity implements BottomPlayerFragment.OnFragmentInteractionListener{
+public class MainActivity extends AppCompatActivity implements BottomPlayerFragment.OnFragmentInteractionListener {
 
     private MediaPlayerService player;
     boolean serviceBound = false;
@@ -96,7 +95,8 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     public static final String Broadcast_UPDATE_PLAYLIST = "com.hillywave.audioplayer.UpdatePlaylist";
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String CURRENT_POSITION = "RECEIVER_MESSAGE";
-    public static final String ALL_DURATION = "RECEIVER_MESSAGE2";;
+    public static final String ALL_DURATION = "RECEIVER_MESSAGE2";
+    ;
     public static final String ACTION = "RECEIVER_MESSAGE3";
     public static final int CHANGE_SEEKBAR = 15511;
     public static final int NEW_AUDIO = 14411;
@@ -126,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         });
 
 
-
         seekBarPlayer = findViewById(R.id.seekBar2);
         seekBarPlayer.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -140,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                if (!(new StorageUtil(getApplicationContext()).getPlaybackStatus())){
+                if (!(new StorageUtil(getApplicationContext()).getPlaybackStatus())) {
                     pauseSong();
                 }
 
@@ -159,28 +158,26 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         editor.apply();
 
 
-
         mBroadcastReceiver = new BroadcastReceiver() {
 
             @Override
             public void onReceive(Context context, Intent intent) {
 
-                switch(intent.getIntExtra(ACTION, CHANGE_SEEKBAR)){
+                switch (intent.getIntExtra(ACTION, CHANGE_SEEKBAR)) {
                     case (CHANGE_SEEKBAR):
-                    int message = intent.getIntExtra(CURRENT_POSITION, -1);
-                    int message2 = intent.getIntExtra(ALL_DURATION, 1);
-                    setSeekBarProgress(message, message2);
-                    break;
+                        int message = intent.getIntExtra(CURRENT_POSITION, -1);
+                        int message2 = intent.getIntExtra(ALL_DURATION, 1);
+                        setSeekBarProgress(message, message2);
+                        break;
                     case (NEW_AUDIO):
-                    changeButtonBoxInfo();
-                    break;
+                        changeBtnBoxInfo();
+                        break;
                     default:
                         break;
 
                 }
-               // boolean message3 = intent.getBooleanExtra(PLAY_STATUS,false);
-               // playBackstatus = message3;
-
+                // boolean message3 = intent.getBooleanExtra(PLAY_STATUS,false);
+                // playBackstatus = message3;
 
 
             }
@@ -201,27 +198,27 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     }
 
-    private void initPlayerElements(){
+    private void initPlayerElements() {
         textView_allTime = findViewById(R.id.textView_allTime);
         textView_currentTime = findViewById(R.id.textView_currentTime);
         textView_titleSong = findViewById(R.id.textView_titleSong);
         textView_artistSong = findViewById(R.id.textView_artistSong);
         textView_cntSong = findViewById(R.id.textView_cntSong);
 
-        seekBarVolume= findViewById(R.id.seekBarVolume);
+        seekBarVolume = findViewById(R.id.seekBarVolume);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-        btnRepeatPlayer =findViewById(R.id.btnRepeatPlayer);
-        btnPrevPlayer =findViewById(R.id.btnPrevPlayer);
-        btnPlayPlayer =findViewById(R.id.btnPlayPlayer);
-        btnNextPlayer =findViewById(R.id.btnNextPlayer);
-        btnShufflePlayer =findViewById(R.id.btnRandomPlayer);
+        btnRepeatPlayer = findViewById(R.id.btnRepeatPlayer);
+        btnPrevPlayer = findViewById(R.id.btnPrevPlayer);
+        btnPlayPlayer = findViewById(R.id.btnPlayPlayer);
+        btnNextPlayer = findViewById(R.id.btnNextPlayer);
+        btnShufflePlayer = findViewById(R.id.btnRandomPlayer);
 
         changeRepeatButton();
         changeShuffleButton();
 
 
-        slidingLayout =  findViewById(R.id.sliding_layout);
+        slidingLayout = findViewById(R.id.sliding_layout);
         slidingLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
@@ -231,17 +228,18 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             @Override
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
 
-                switch (newState){
+                switch (newState) {
                     case COLLAPSED:
-                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+                        panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                         break;
                     case EXPANDED:
                         panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
+                        break;
                     case DRAGGING:
-                        if (previousState == SlidingUpPanelLayout.PanelState.COLLAPSED){
+                        if (previousState == SlidingUpPanelLayout.PanelState.COLLAPSED) {
                             panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
-                        } else if (previousState == SlidingUpPanelLayout.PanelState.EXPANDED){
-                            panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+                        } else if (previousState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                            panel.findViewById(R.id.fragment_box).setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                         }
                         break;
                     default:
@@ -249,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 }
             }
         });
-
 
 
         seekBarVolume.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
@@ -320,16 +317,16 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     }
 
 
-    private void changeShuffleButton(){
-        if (new StorageUtil(getApplicationContext()).getShuffleStatus()){
+    private void changeShuffleButton() {
+        if (new StorageUtil(getApplicationContext()).getShuffleStatus()) {
             btnShufflePlayer.setImageResource(R.drawable.ico_shuffle);
         } else {
             btnShufflePlayer.setImageResource(R.drawable.ico_shuffle_white);
         }
     }
 
-    private void changeRepeatButton(){
-        switch (new StorageUtil(getApplicationContext()).getRepeatStatus()){
+    private void changeRepeatButton() {
+        switch (new StorageUtil(getApplicationContext()).getRepeatStatus()) {
 
             case 0:
                 btnRepeatPlayer.setImageResource(R.drawable.ico_repeat_white);
@@ -347,14 +344,12 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     }
 
 
-
-
-    private void callSortDialog(){
+    private void callSortDialog() {
         final View layout = getLayoutInflater().inflate(R.layout.fragment_setorder, null, false);
         final RadioGroup radioGroup = layout.findViewById(R.id.radioGroup_setOrder);
         final CheckBox checkBox = layout.findViewById(R.id.reverseOrder);
 
-        switch (prefs.getInt("order_option", 3)){
+        switch (prefs.getInt("order_option", 3)) {
             // 1 - Sort by date
             // 2 - Sort by artist
             // 3 - Sort by title
@@ -374,13 +369,11 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             default:
                 break;
         }
-        if (prefs.getBoolean("order_reverseOrder", false)){
+        if (prefs.getBoolean("order_reverseOrder", false)) {
             checkBox.setChecked(true);
         } else {
             checkBox.setChecked(false);
         }
-
-
 
 
         final PopupWindow changeSortPopUp = new PopupWindow(getApplicationContext());
@@ -401,7 +394,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         });
 
 
-        Button close =  layout.findViewById(R.id.setOrder_confirmBtn);
+        Button close = layout.findViewById(R.id.setOrder_confirmBtn);
         close.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -411,7 +404,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 // 3 - Sort by title
                 // 4 - Sort by album
 
-                switch (radioGroup.getCheckedRadioButtonId()){
+                switch (radioGroup.getCheckedRadioButtonId()) {
                     case R.id.radioButtonDate:
                         editor.putInt("order_option", 1);
                         break;
@@ -427,7 +420,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                     default:
                         break;
                 }
-                if (checkBox.isChecked()){
+                if (checkBox.isChecked()) {
                     editor.putBoolean("order_reverseOrder", true);
                 } else {
                     editor.putBoolean("order_reverseOrder", false);
@@ -445,10 +438,9 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         });
 
 
-
     }
 
-    private void createlist(){
+    private void createlist() {
         loadAudio();
         initRecyclerView();
 
@@ -458,7 +450,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     protected void onStart() {
         super.onStart();
         LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), new IntentFilter(RECEIVER_INTENT));
-        changeButtonBoxInfo();
+        changeBtnBoxInfo();
 
     }
 
@@ -469,9 +461,8 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     }
 
-    private void initRecyclerView(){
-        Log.d(TAG, "initRecyclerView: ");
-        if (audioList.size() > 0){
+    private void initRecyclerView() {
+        if (audioList.size() > 0) {
             recyclerView = findViewById(R.id.recyclerview);
             recyclerView.setHasFixedSize(true);
             adapter = new RecyclerView_Adapter(audioList, this);
@@ -488,7 +479,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     }
 
 
-    public void requestPermissionForReadExtertalStorage() throws Exception {
+    public void requestPermissionForReadExtertalStorage() {
         try {
 
             int READ_STORAGE_PERMISSION_REQUEST_CODE = 1;
@@ -496,25 +487,24 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw e;
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    createlist();
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            createlist();
 
-                } else {
-                    Toast.makeText(getApplicationContext(), "Додатку необхіден доступ для зчитування файлів", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Додатку необхіден доступ для зчитування файлів", Toast.LENGTH_LONG).show();
 
-                    try {
-                        requestPermissionForReadExtertalStorage();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+            try {
+                requestPermissionForReadExtertalStorage();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
@@ -527,120 +517,58 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     }
 
 
-    //void playAudio(String media){
-    void playAudio(int position){
-        Log.d(TAG, "onCreate: " + new StorageUtil(getApplicationContext()).getPlaybackStatus());
-        Log.d(TAG, "onCreate: " +  (player == null));
+    void playAudio(int position) {
         StorageUtil storage = new StorageUtil(getApplicationContext());
-
-        if (!serviceBound){
-
-            storage.storeAudioIndex(position);
-
+        storage.storeAudioIndex(position);
+        if (!serviceBound) {
             Intent playerIntent = new Intent(this, MediaPlayerService.class);
-            //playerIntent.putExtra("media", audioList.get(position).getData());
-
             startService(playerIntent);
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-
         } else {
-            storage.storeAudioIndex(position);
-
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
             sendBroadcast(broadcastIntent);
-
-            //Service is active
-            //Send media with BroadcastReceiver
-
         }
         recyclerView.scrollToPosition(position);
-        updateTrackInfo();
-        changeButtonBoxInfo();
-
-
+        changeBtnBoxInfo();
     }
 
-    void playAudio(){
+    void playAudio() {
         StorageUtil storage = new StorageUtil(getApplicationContext());
         if (storage.loadAudioIndex() != -1) {
 
-            Log.d(TAG, "playAudio: " + serviceBound);
-
-            if (player == null){
+            if (player == null) {
                 serviceBound = false;
             }
 
             if (!serviceBound) {
-
-
                 Intent playerIntent = new Intent(this, MediaPlayerService.class);
-                //playerIntent.putExtra("media", audioList.get(position).getData());
-
                 startService(playerIntent);
                 bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-
             } else {
                 Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
                 sendBroadcast(broadcastIntent);
-
-                //Service is active
-                //Send media with BroadcastReceiver
-
             }
-
-            updateTrackInfo();
-            changeButtonBoxInfo();
-
+            changeBtnBoxInfo();
         }
     }
 
-    private void updateTrackInfo(){
-            StorageUtil storage = new StorageUtil(getApplicationContext());
-            int pos = storage.loadAudioIndex();
 
-        Audio activeAudio =  audioList.get(pos);
-
-        MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
-        metadataRetriever.setDataSource(activeAudio.getData());
-        byte[] art;
-        try{
-
-            art = metadataRetriever.getEmbeddedPicture();
-            Bitmap song_cover = BitmapFactory.decodeByteArray(art, 0, art.length);
-
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-
-
-    }
-
-
-
-    private void loadAudio(){
-
-
-        if (!checkPermissionForReadExtertalStorage()){
+    private void loadAudio() {
+        if (!checkPermissionForReadExtertalStorage()) {
             try {
                 requestPermissionForReadExtertalStorage();
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            } else {
-
+        } else {
             audioList.clear();
             new StorageUtil(getApplicationContext()).clearList();
-
             ContentResolver contentResolver = getContentResolver();
-
-            MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
-
             Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
             String setOrder = createOrderString();
             Cursor cursor = contentResolver.query(uri, null, selection, null, setOrder);
-
 
             if (cursor != null && cursor.getCount() > 0) {
                 while (cursor.moveToNext()) {
@@ -653,10 +581,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                     String year = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.YEAR));
                     Long lastchange = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED));
 
-
-
-
-                   // audioList.add(new Audio(data, title, album, artist, display_name, duration, year, image));
                     audioList.add(new Audio(data, title, album, artist, display_name, duration, year, lastchange));
 
                 }
@@ -668,7 +592,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         }
     }
 
-    private String createOrderString(){
+    private String createOrderString() {
 
         // 1 - Sort by date
         // 2 - Sort by artist
@@ -676,7 +600,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         // 4 - Sort by album
         String s = "";
 
-        switch (prefs.getInt("order_option", 3)){
+        switch (prefs.getInt("order_option", 3)) {
             case 1:
                 s = s.concat(MediaStore.Audio.Media.DATE_MODIFIED);
                 break;
@@ -693,7 +617,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 break;
         }
 
-        if (prefs.getBoolean("order_reverseOrder", false)){
+        if (prefs.getBoolean("order_reverseOrder", false)) {
             s = s.concat(" ASC");
         } else {
             s = s.concat(" DESC");
@@ -702,9 +626,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         return s;
 
 
-
     }
-
 
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -740,7 +662,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (serviceBound){
+        if (serviceBound) {
             pauseSong();
             unbindService(serviceConnection);
             player.stopSelf();
@@ -749,38 +671,26 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     }
 
 
-
-
-    private void changeButtonBoxInfo(){
+    private void changeBtnBoxInfo() {
         StorageUtil storage = new StorageUtil(getApplicationContext());
         int audioIndex = storage.loadAudioIndex();
-        Log.d("Audio index", "Main Activity changebuttonBox Info: " + audioIndex);
         ArrayList<Audio> audioListfragment = storage.loadAudio();
 
         BottomPlayerFragment articleFrag = (BottomPlayerFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_box);
-
-        Log.d(TAG, "changeButtonBoxInfo: " + articleFrag);
         if (audioIndex != -1) {
-
             if (articleFrag != null) {
                 try {
                     articleFrag.changeSongInfo(audioListfragment.get(audioIndex).getArtist(), audioListfragment.get(audioIndex).getTitle());
-
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                     articleFrag.changeSongInfo("", "");
                 }
-
             } else {
-
                 BottomPlayerFragment newFragment = new BottomPlayerFragment();
                 Bundle args = new Bundle();
                 args.putString("audio_title", audioListfragment.get(audioIndex).getTitle());
                 args.putString("audio_artist", audioListfragment.get(audioIndex).getArtist());
-
-
                 newFragment.setArguments(args);
-
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_box, newFragment);
                 transaction.addToBackStack(null);
@@ -791,32 +701,31 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         }
     }
 
-    private void changePlayerLayout(final String imageData, String titleSong, String artistSong, int position, int allSongCnt){
+    private void changePlayerLayout(final String imageData, String titleSong, String artistSong, int position, int allSongCnt) {
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                    mMetadataRetriever.setDataSource(imageData);
-                    final byte[] data = mMetadataRetriever.getEmbeddedPicture();
-                    Bitmap bitmap = null;
-                    if(data != null) {
-                        bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                    }
+                mMetadataRetriever.setDataSource(imageData);
+                final byte[] data = mMetadataRetriever.getEmbeddedPicture();
+                Bitmap bitmap = null;
+                if (data != null) {
+                    bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                }
 
-                    final Bitmap finalBitmap = bitmap;
+                final Bitmap finalBitmap = bitmap;
 
-                    MainActivity.runOnUi(new Runnable() {
-                        @Override
-                        public void run() {
-                        if (finalBitmap != null){
+                MainActivity.runOnUi(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (finalBitmap != null) {
                             imgAlbumCover.setImageBitmap(finalBitmap);
-
                         } else {
                             imgAlbumCover.setImageResource(R.drawable.image);
                         }
-                        }
-                    });
-                }
+                    }
+                });
+            }
 
         }).start();
 
@@ -827,7 +736,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     }
 
-    public void setSeekBarProgress(int progress, int allProgrss){
+    public void setSeekBarProgress(int progress, int allProgrss) {
 
         seekBarPlayer.setMax(allProgrss);
         seekBarPlayer.setProgress(progress);
@@ -848,7 +757,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
 
             articleFrag.changeButton();
-            if (new StorageUtil(getApplicationContext()).getPlaybackStatus()){
+            if (new StorageUtil(getApplicationContext()).getPlaybackStatus()) {
                 btnPlayPlayer.setImageResource(R.drawable.ico_pause);
             } else {
                 btnPlayPlayer.setImageResource(R.drawable.ico_play);
@@ -861,10 +770,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             Bundle args = new Bundle();
             args.putString("audio_title", audioListfragment.get(audioIndex).getTitle());
             args.putString("audio_artist", audioListfragment.get(audioIndex).getArtist());
-
-
             newFragment.setArguments(args);
-
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.replace(R.id.fragment_box, newFragment);
             transaction.addToBackStack(null);
@@ -876,18 +782,14 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     @Override
     public void prevSong() {
-
         StorageUtil storage = new StorageUtil(getApplicationContext());
-
         if (storage.loadAudioIndex() - 1 >= 0) {
             storage.minusIndex();
-        } else if (storage.loadAudioIndex() - 1 < 0){
+        } else if (storage.loadAudioIndex() - 1 < 0) {
             storage.storeAudioIndex(audioList.size() - 1);
         }
-
         playAudio(storage.loadAudioIndex());
-        changeButtonBoxInfo();
-
+        changeBtnBoxInfo();
 
     }
 
@@ -907,44 +809,35 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     @Override
     public void nextSong() {
-
         StorageUtil storage = new StorageUtil(getApplicationContext());
-
-
         if (storage.loadAudioIndex() + 1 < audioList.size()) {
             storage.plusIndex();
         } else if (storage.loadAudioIndex() + 1 > audioList.size() - 1) {
             storage.storeAudioIndex(0);
         }
-
-
-
-
         playAudio(storage.loadAudioIndex());
-        changeButtonBoxInfo();
-
-
+        changeBtnBoxInfo();
     }
 
     @Override
     public void changeTimeSong(int i) {
-            if (player != null){
-                player.resumeMedia(i);
-            }else {
-                playAudio();
-            }
+        if (player != null) {
+            player.resumeMedia(i);
+        } else {
+            playAudio();
+        }
 
     }
 
-    private String convertTime(long time){
+    private String convertTime(long time) {
         long second = (time) % 60;
         long minute = (time / (60)) % 60;
-        return String.format( Locale.getDefault(), "%02d:%02d", minute, second);
+        return String.format(Locale.getDefault(), "%02d:%02d", minute, second);
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode){
+        switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
                 seekBarVolume.setProgress(seekBarVolume.getProgress() + 1);
@@ -960,14 +853,14 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     @Override
     public void onBackPressed() {
-        if (slidingLayout != null && (slidingLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED || slidingLayout.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED)){
+        if (slidingLayout != null && (slidingLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED || slidingLayout.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED)) {
             slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         } else {
             super.onBackPressed();
         }
     }
 
-    public static void runOnUi(Runnable runnable){
+    public static void runOnUi(Runnable runnable) {
         UIHandler.post(runnable);
     }
 }
