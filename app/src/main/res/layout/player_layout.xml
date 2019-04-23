@@ -47,17 +47,17 @@
             android:paddingBottom="5dp"
             android:textColor="#424242"
             android:textSize="20sp"
-            tools:text="TextView" />
+            tools:text="Song title" />
 
         <TextView
             android:id="@+id/textView_artistSong"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColor="#9e9e9e"
             android:maxLines="2"
+            android:textColor="#9e9e9e"
             android:textSize="17sp"
-            tools:text="TextView" />
+            tools:text="Artist title" />
 
         <TextView
             android:id="@+id/textView_cntSong"
@@ -66,7 +66,7 @@
             android:layout_marginTop="15dp"
             android:gravity="center"
             android:textColor="#a5a5a5"
-            tools:text="TextView" />
+            tools:text="0 з 0" />
     </LinearLayout>
 
     <LinearLayout

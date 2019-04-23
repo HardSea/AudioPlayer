@@ -8,7 +8,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -151,11 +150,9 @@ public class FastScroller extends LinearLayout {
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             switch (newState){
                 case RecyclerView.SCROLL_STATE_DRAGGING:
-                    Log.d("FastScroller", "onScrollStateChanged: Scrolling now" );
                     MainActivity.rvIsScrolling = true;
                     break;
                 case RecyclerView.SCROLL_STATE_SETTLING:
-                    Log.d("FastScroller", "onScrollStateChanged: " + "Scroll Settling");
                     MainActivity.rvIsScrolling = false;
                     break;
 

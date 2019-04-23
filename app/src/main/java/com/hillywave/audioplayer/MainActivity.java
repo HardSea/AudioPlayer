@@ -57,15 +57,13 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity implements BottomPlayerFragment.OnFragmentInteractionListener {
 
     private MediaPlayerService player;
-    boolean serviceBound = false;
+    public boolean serviceBound = false;
     private ArrayList<Audio> audioList;
 
     private MediaMetadataRetriever mMetadataRetriever;
 
     private RecyclerView.Adapter adapter;
     private RecyclerView recyclerView;
-    private Toolbar toolBar;
-    private ImageButton sortBtn;
     private ImageView imgAlbumCover;
     private SeekBar seekBarPlayer;
     private SeekBar seekBarVolume;
@@ -75,9 +73,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     private TextView textView_artistSong;
     private TextView textView_cntSong;
     private ImageButton btnRepeatPlayer;
-    private ImageButton btnPrevPlayer;
     private ImageButton btnPlayPlayer;
-    private ImageButton btnNextPlayer;
     private ImageButton btnShufflePlayer;
 
 
@@ -96,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String CURRENT_POSITION = "RECEIVER_MESSAGE";
     public static final String ALL_DURATION = "RECEIVER_MESSAGE2";
-    ;
+
     public static final String ACTION = "RECEIVER_MESSAGE3";
     public static final int CHANGE_SEEKBAR = 15511;
     public static final int NEW_AUDIO = 14411;
@@ -114,10 +110,10 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         setContentView(R.layout.activity_main);
 
-        toolBar = findViewById(R.id.toolBar);
+        Toolbar toolBar = findViewById(R.id.toolBar);
         setSupportActionBar(toolBar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
-        sortBtn = toolBar.findViewById(R.id.sortBtn);
+        ImageButton sortBtn = toolBar.findViewById(R.id.sortBtn);
         sortBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -147,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 textView_currentTime.setText(convertTime(seekBar.getProgress()));
             }
         });
+
 
         initPlayerElements();
 
@@ -209,9 +206,9 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         btnRepeatPlayer = findViewById(R.id.btnRepeatPlayer);
-        btnPrevPlayer = findViewById(R.id.btnPrevPlayer);
+        ImageButton btnPrevPlayer = findViewById(R.id.btnPrevPlayer);
         btnPlayPlayer = findViewById(R.id.btnPlayPlayer);
-        btnNextPlayer = findViewById(R.id.btnNextPlayer);
+        ImageButton btnNextPlayer = findViewById(R.id.btnNextPlayer);
         btnShufflePlayer = findViewById(R.id.btnRandomPlayer);
 
         changeRepeatButton();
@@ -259,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                seekBarVolume.setProgress(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
             }
 
             @Override
@@ -468,7 +465,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             adapter = new RecyclerView_Adapter(audioList, this);
             recyclerView.setAdapter(adapter);
             RecyclerView.LayoutManager lm = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-            FastScroller fastScroller = (FastScroller) findViewById(R.id.fastscroller);
+            FastScroller fastScroller = findViewById(R.id.fastscroller);
             fastScroller.setRecyclerView(recyclerView);
             lm.setAutoMeasureEnabled(false);
             recyclerView.setLayoutManager(lm);
@@ -518,28 +515,17 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
 
     void playAudio(int position) {
+
         StorageUtil storage = new StorageUtil(getApplicationContext());
-        storage.storeAudioIndex(position);
-        if (!serviceBound) {
-            Intent playerIntent = new Intent(this, MediaPlayerService.class);
-            startService(playerIntent);
-            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        if (position != -1) {
+            storage.storeAudioIndex(position);
         } else {
-            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
-            sendBroadcast(broadcastIntent);
+            position = storage.loadAudioIndex();
         }
-        recyclerView.scrollToPosition(position);
-        changeBtnBoxInfo();
-    }
-
-    void playAudio() {
-        StorageUtil storage = new StorageUtil(getApplicationContext());
-        if (storage.loadAudioIndex() != -1) {
-
+        try {
             if (player == null) {
                 serviceBound = false;
             }
-
             if (!serviceBound) {
                 Intent playerIntent = new Intent(this, MediaPlayerService.class);
                 startService(playerIntent);
@@ -548,8 +534,13 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
                 sendBroadcast(broadcastIntent);
             }
+            recyclerView.scrollToPosition(position);
             changeBtnBoxInfo();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
     }
 
 
@@ -579,7 +570,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                     String display_name = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
                     String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
                     String year = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.YEAR));
-                    Long lastchange = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED));
+                    long lastchange = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED));
 
                     audioList.add(new Audio(data, title, album, artist, display_name, duration, year, lastchange));
 
@@ -795,6 +786,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     @Override
     public void pauseSong() {
+
         if (player != null) {
             if (new StorageUtil(getApplicationContext()).getPlaybackStatus()) {
                 player.pausemedia();
@@ -803,7 +795,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             }
         } else {
             new StorageUtil(getApplicationContext()).setPlaybackStatus(true);
-            playAudio();
+            playAudio(-1);
         }
     }
 
@@ -824,7 +816,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         if (player != null) {
             player.resumeMedia(i);
         } else {
-            playAudio();
+            playAudio(-1);
         }
 
     }
@@ -839,12 +831,27 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
+                seekBarVolume.setProgress(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
                 seekBarVolume.setProgress(seekBarVolume.getProgress() + 1);
                 return true;
             case KeyEvent.KEYCODE_VOLUME_DOWN:
+                seekBarVolume.setProgress(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI);
                 seekBarVolume.setProgress(seekBarVolume.getProgress() - 1);
+                return true;
+
+            case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                pauseSong();
+                return true;
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+                pauseSong();
+                return true;
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
+                nextSong();
+                return true;
+            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                prevSong();
                 return true;
             default:
                 return super.onKeyDown(keyCode, event);
