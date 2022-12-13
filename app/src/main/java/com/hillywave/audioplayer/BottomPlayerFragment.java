@@ -87,11 +87,8 @@ public class BottomPlayerFragment extends Fragment {
         seekBar.setVisibility(View.INVISIBLE);
 
 
-
-
         tv1 = view.findViewById(R.id.nameArtistFragment);
         tv2 = view.findViewById(R.id.nameTitleFragment);
-
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override

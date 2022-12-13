@@ -47,12 +47,12 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.hillywave.audioplayer.data.model.Audio;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
-
 
 public class MainActivity extends AppCompatActivity implements BottomPlayerFragment.OnFragmentInteractionListener {
 
@@ -75,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
     private ImageButton btnRepeatPlayer;
     private ImageButton btnPlayPlayer;
     private ImageButton btnShufflePlayer;
-
 
     private SlidingUpPanelLayout slidingLayout;
 
@@ -114,13 +113,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         setSupportActionBar(toolBar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         ImageButton sortBtn = toolBar.findViewById(R.id.sortBtn);
-        sortBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                callSortDialog();
-            }
-        });
-
+        sortBtn.setOnClickListener(view -> callSortDialog());
 
         seekBarPlayer = findViewById(R.id.seekBar2);
         seekBarPlayer.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -144,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             }
         });
 
-
         initPlayerElements();
 
         mMetadataRetriever = new MediaMetadataRetriever();
@@ -153,7 +145,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         prefs = getApplicationContext().getSharedPreferences("default_preference", MODE_PRIVATE);
         editor = prefs.edit();
         editor.apply();
-
 
         mBroadcastReceiver = new BroadcastReceiver() {
 
@@ -175,15 +166,12 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 }
                 // boolean message3 = intent.getBooleanExtra(PLAY_STATUS,false);
                 // playBackstatus = message3;
-
-
             }
         };
 
         audioList = new ArrayList<>();
 
-
-        if (!checkPermissionForReadExtertalStorage()) {
+        if (!checkPermissionForReadExternalStorage()) {
             try {
                 requestPermissionForReadExtertalStorage();
             } catch (Exception e) {
@@ -366,11 +354,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
             default:
                 break;
         }
-        if (prefs.getBoolean("order_reverseOrder", false)) {
-            checkBox.setChecked(true);
-        } else {
-            checkBox.setChecked(false);
-        }
+        checkBox.setChecked(prefs.getBoolean("order_reverseOrder", false));
 
 
         final PopupWindow changeSortPopUp = new PopupWindow(getApplicationContext());
@@ -417,11 +401,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                     default:
                         break;
                 }
-                if (checkBox.isChecked()) {
-                    editor.putBoolean("order_reverseOrder", true);
-                } else {
-                    editor.putBoolean("order_reverseOrder", false);
-                }
+                editor.putBoolean("order_reverseOrder", checkBox.isChecked());
 
                 editor.apply();
                 changeSortPopUp.dismiss();
@@ -505,7 +485,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     }
 
-    public boolean checkPermissionForReadExtertalStorage() {
+    public boolean checkPermissionForReadExternalStorage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int result = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
             return result == PackageManager.PERMISSION_GRANTED;
@@ -545,7 +525,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
 
     private void loadAudio() {
-        if (!checkPermissionForReadExtertalStorage()) {
+        if (!checkPermissionForReadExternalStorage()) {
             try {
                 requestPermissionForReadExtertalStorage();
             } catch (Exception e) {
@@ -615,19 +595,15 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
         }
 
         return s;
-
-
     }
 
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-
             MediaPlayerService.LocalBinder binder = (MediaPlayerService.LocalBinder) service;
             player = binder.getService();
             serviceBound = true;
-
         }
 
         @Override
@@ -694,30 +670,23 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
     private void changePlayerLayout(final String imageData, String titleSong, String artistSong, int position, int allSongCnt) {
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mMetadataRetriever.setDataSource(imageData);
-                final byte[] data = mMetadataRetriever.getEmbeddedPicture();
-                Bitmap bitmap = null;
-                if (data != null) {
-                    bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                }
-
-                final Bitmap finalBitmap = bitmap;
-
-                MainActivity.runOnUi(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (finalBitmap != null) {
-                            imgAlbumCover.setImageBitmap(finalBitmap);
-                        } else {
-                            imgAlbumCover.setImageResource(R.drawable.image);
-                        }
-                    }
-                });
+        new Thread(() -> {
+            mMetadataRetriever.setDataSource(imageData);
+            final byte[] data = mMetadataRetriever.getEmbeddedPicture();
+            Bitmap bitmap = null;
+            if (data != null) {
+                bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
             }
 
+            final Bitmap finalBitmap = bitmap;
+
+            MainActivity.runOnUi(() -> {
+                if (finalBitmap != null) {
+                    imgAlbumCover.setImageBitmap(finalBitmap);
+                } else {
+                    imgAlbumCover.setImageResource(R.drawable.image);
+                }
+            });
         }).start();
 
 
@@ -754,7 +723,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 btnPlayPlayer.setImageResource(R.drawable.ico_play);
             }
 
-
         } else {
 
             BottomPlayerFragment newFragment = new BottomPlayerFragment();
@@ -789,7 +757,7 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
 
         if (player != null) {
             if (new StorageUtil(getApplicationContext()).getPlaybackStatus()) {
-                player.pausemedia();
+                player.pauseMedia();
             } else {
                 player.resumeMedia();
             }
@@ -842,8 +810,6 @@ public class MainActivity extends AppCompatActivity implements BottomPlayerFragm
                 return true;
 
             case KeyEvent.KEYCODE_MEDIA_PAUSE:
-                pauseSong();
-                return true;
             case KeyEvent.KEYCODE_MEDIA_PLAY:
                 pauseSong();
                 return true;

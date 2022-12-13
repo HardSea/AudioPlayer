@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.hillywave.audioplayer.data.model.Audio;
+
 import java.util.List;
 
 public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder> {
@@ -64,10 +66,7 @@ public class RecyclerView_Adapter extends RecyclerView.Adapter<ViewHolder> {
                 }
 
             }).start();
-
-
         }
-
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,6 +97,5 @@ class ViewHolder extends RecyclerView.ViewHolder {
         title2 = itemView.findViewById(R.id.title2);
         albumCover = itemView.findViewById(R.id.albumCover);
         // LinearLayout linearLayoutRV = itemView.findViewById(R.id.item_rv_layout);
-
     }
 }

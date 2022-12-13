@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.hillywave.audioplayer.data.model.Audio;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -57,7 +58,6 @@ class StorageUtil {
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getInt("audioIndex", -1);
     }
-
 
     void clearCachedAudioPlayList() {
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
@@ -136,8 +136,5 @@ class StorageUtil {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("shuffleStatus", shuffleStatus);
         editor.apply();
-
     }
-
-
 }
